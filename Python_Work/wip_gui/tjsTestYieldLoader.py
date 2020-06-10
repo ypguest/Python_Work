@@ -93,4 +93,4 @@ def tjsTestYieldLoader():
 
 
 if __name__ == "__main__":
-    main()
+    tjsTestYieldLoader()
