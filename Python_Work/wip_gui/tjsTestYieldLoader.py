@@ -57,7 +57,7 @@ def file_repeat_chk(file_path):
     return data_paths
 
 
-def main():
+def tjsTestYieldLoader():
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
     file_path = r'Z:\QRE\04_QA(Component)\99_Daily_Report\03_TJS_Testing_Yield_Report'
