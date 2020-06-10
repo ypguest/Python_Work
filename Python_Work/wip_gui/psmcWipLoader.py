@@ -5,7 +5,7 @@
 本脚本用于更新数据库中psmc_wip_report，同时将已经更新的文件路径记录到psmc_loader文件中
 在所有脚本中的顺序
 01 psmcWipLoader
-02 TJS_Workoder_Tracking_Table
+02 tjsTestYieldLoader
 
 """
 
