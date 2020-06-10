@@ -11,11 +11,6 @@ import numpy as np
 import pymysql
 from sqlalchemy import create_engine
 
-# pd设置
-pd.set_option('display.max_columns', None)   # 显示不省略行
-pd.set_option('display.max_rows', None)      # 显示不省略列
-pd.set_option('display.width', None)         # 显示不换行
-
 
 def lot_start():
     # Todo 确认每个lot的Wafer start time以及Wafer Count;
