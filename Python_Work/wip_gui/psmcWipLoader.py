@@ -6,6 +6,8 @@
 在所有脚本中的顺序
 01 psmcWipLoader
 02 tjsTestYieldLoader
+03 tjsWoLoader
+
 
 """
 
@@ -99,7 +101,7 @@ def psmcWipLoader():
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         # noinspection PyBroadException
         try:
-            pd.io.sql.to_sql(loader_record, 'wiploader', con=myconnect, schema='testdb', if_exists='append', index=False)
+            pd.io.sql.to_sql(loader_record, 'wiploader', con=myconnect, schema='configdb', if_exists='append', index=False)
         except Exception:
             continue
         # todo 上传wip数据

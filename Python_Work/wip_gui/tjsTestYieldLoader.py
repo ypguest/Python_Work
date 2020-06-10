@@ -39,7 +39,7 @@ def file_repeat_chk(file_path):
     connection = pymysql.connect(**sql_config)
     try:
         with connection.cursor() as cursor:
-            cursor.execute('USE testdb;')
+            cursor.execute('USE configdb;')
             cursor.execute('SELECT filename FROM testloader')
             result = cursor.fetchall()
     finally:
@@ -87,7 +87,7 @@ def main():
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         # noinspection PyBroadException
         try:
-            pd.io.sql.to_sql(loader_record, 'testloader', con=myconnect, schema='testdb', if_exists='append', index=False)
+            pd.io.sql.to_sql(loader_record, 'testloader', con=myconnect, schema='configdb', if_exists='append', index=False)
         except Exception:
             continue
 
