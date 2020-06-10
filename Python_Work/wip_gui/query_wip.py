@@ -142,14 +142,12 @@ def lot_wafer():
                             for result in sql_results:
                                 if result[4] == '1':   # 选取Wafer No为1的bin
                                     for binNo in result[3].split(','):
-                                        print(dictlot, binNo)
                                         if binNo.strip() == '01~11':
                                             dictlot['BE_Lot_ID(Bin01~11)'] = result[1]
                                         elif binNo.strip() == '16~21':
                                             dictlot['BE_Lot_ID(Bin16~21)'] = result[1]
                                         else:
                                             dictlot['BE_Lot_ID(Other)'] = result[1]
-                                        print(dictlot, binNo)
                         continue   # 只要有一个成立，则跳出for循环
                 dflot = pd.DataFrame.from_dict([dictlot], orient='columns')   # 将生成的dictlot信息转化为DataFrame
                 dflot = dflot.reindex(columns=['Current_Chip_Name', 'Mlot_ID', 'Lot_Wafer_No', 'Wafer_No', 'BE_Lot_ID(Bin01~11)', 'BE_Lot_ID(Bin16~21)', 'BE_Lot_ID(Other)'], fill_value=np.nan)
