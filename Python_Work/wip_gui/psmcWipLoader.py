@@ -3,6 +3,10 @@
 
 """
 本脚本用于更新数据库中psmc_wip_report，同时将已经更新的文件路径记录到psmc_loader文件中
+在所有脚本中的顺序
+01 psmcWipLoader
+02 TJS_Workoder_Tracking_Table
+
 """
 
 import os
@@ -61,7 +65,7 @@ def file_repeat_chk(file_path):
     return data_paths
 
 
-def main():
+def psmcWipLoader():
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
     file_path = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
@@ -110,4 +114,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    psmcWipLoader()
