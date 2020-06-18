@@ -43,8 +43,8 @@ def createrdmap(filename):
     with open(filename) as FHIN:
         lines = FHIN.readlines()
         lines = [_.strip('\n') for _ in lines]
-        lotid, wafer, lotid1, wafer1, lot2 = re.split(r'\s+', lines[1].strip())
-        print(lotid, wafer, lotid1, wafer1, lot2 )
+        # lotid, wafer, lotid1, wafer1, lot2 = re.split(r'\s+', lines[1].strip())
+        # print(lotid, wafer, lotid1, wafer1, lot2 )
         for line in lines[9:]:
             if line == '':
                 break
@@ -77,8 +77,8 @@ def createrdmap(filename):
             if os.path.isfile(bmpName):
                 continue
             bmpSize = (cowct * (frlx + 4) + 6, rolct * (frly + 4) + 6)
-            reticalx = 4
-            reticaly = 4
+            reticalx = 2
+            reticaly = 3
             newImage = Image.new('RGBA', bmpSize, 'WhiteSmoke')
 
             for chipline, rdline in zip(chiplines, rdlines):
@@ -89,8 +89,8 @@ def createrdmap(filename):
                 topLeftX = (x - 1) * (frlx + 4) + 3
                 topLeftY = bmpSize[1] - y * (frly + 4) - 3
                 newImage.paste(im, (topLeftX, topLeftY))
-            for x in range(cowct + 1):
-                if x % reticalx == 0:
+            for x in range(cowct+1):
+                if x % reticalx == 1:   # 调整X方向的Retical
                     newImage.paste("red", (x * (frlx + 4), 0, x * (frlx + 4) + 2, bmpSize[1]))
             for y in range(rolct + 1):
                 if y % reticaly == 0:
@@ -101,5 +101,5 @@ def createrdmap(filename):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\yinpeng\Desktop\111\CP_P_PL7507_03_1'
+    path = r'C:\Users\yinpeng\Desktop\WorkSpace\CP_P_BJN865000_01_1'
     createrdmap(path)
