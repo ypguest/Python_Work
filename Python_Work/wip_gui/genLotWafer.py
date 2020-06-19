@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-本脚本用于生成LotWafer, 并将psmc及tjs的Lot进行连接
+本脚本用于生成psmc_lot_wafer, 并根据tjs_wo_tracking_table将tjs的Lot id与pscm Wafer进行连接
 """
 
 import pandas as pd
@@ -11,7 +11,7 @@ import pymysql
 from sqlalchemy import create_engine
 
 
-def genLotWafer():
+def GenLotWafer():
     # todo 从psmc_wip_report数据中获取当前时间=出货时间的lot信息，并返回元祖
     sql_config = {
         'user': 'root',
@@ -76,6 +76,6 @@ def genLotWafer():
 
 
 if __name__ == "__main__":
-    genLotWafer()
+    GenLotWafer()
 
 
