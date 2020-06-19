@@ -19,7 +19,7 @@ pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
 
-def dir_folder(file_path):
+def DirFolder(file_path):
     file_paths = []
     for root, dirs, files in os.walk(file_path):
         for file in files:
@@ -27,7 +27,7 @@ def dir_folder(file_path):
     return file_paths
 
 
-def file_repeat_chk(file_path):
+def FileRepeatChk(file_path):
     # todo 判断每天需要upload的文件
     sql_config = {
         'user': 'root',
@@ -49,7 +49,7 @@ def file_repeat_chk(file_path):
     for i in result:     # 将文件名元祖变成文件名列表
         for j in i:
             old_name.append(j)
-    data_paths = dir_folder(file_path)    # 查询所有文件的路径
+    data_paths = DirFolder(file_path)    # 查询所有文件的路径
     for data_path in data_paths:
         _, filename = os.path.split(data_path)
         new_name.append(filename)
@@ -57,7 +57,7 @@ def file_repeat_chk(file_path):
     return data_paths
 
 
-def tjsTestYieldLoader():
+def TjsTestYieldLoader():
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
     file_path = r'Z:\QRE\04_QA(Component)\99_Daily_Report\03_TJS_Testing_Yield_Report'
@@ -69,7 +69,7 @@ def tjsTestYieldLoader():
                 'BIN7', 'BIN8', 'Damage', 'LOSS', 'Tester', 'Device', 'P/N']
 
     # Todo 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径
-    data_paths = [file_path + '\\' + i for i in file_repeat_chk(file_path)]
+    data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
 
     for data_path in data_paths:
         # todo 将bi及ft测试数据上传至tjs_bi_testing_yield_report & tjs_ft_testing_yield_report数据库
@@ -93,4 +93,4 @@ def tjsTestYieldLoader():
 
 
 if __name__ == "__main__":
-    tjsTestYieldLoader()
+    TjsTestYieldLoader()

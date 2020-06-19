@@ -18,7 +18,7 @@ pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
 
-def dir_folder(file_path):
+def DirFolder(file_path):
     file_paths = []
     for root, dirs, files in os.walk(file_path):
         for file in files:
@@ -53,7 +53,7 @@ def tjsWipLoader():
               'STEP': 'Step', 'Current Time': 'Current_Time', 'Forecast out Date': 'Forecast_Date', 'Current Qty': 'Current_Qty', 'Assembly In': 'Assembly_In', 'Assembly Out': 'Assembly_Out',
               'TDBI In': 'TDBI_In', 'TDBI Out': 'TDBI_Out', 'FT1 In': 'FT1_In', 'FT1 Out': 'FT1_Out', 'FT2 In': 'FT2_In', 'FT2 Out': 'FT2_Out', 'FT-OUT In': 'FT-OUT_In',
               'FT-OUT Out': 'FT-OUT_Out', 'FT5 In': 'FT5_In', 'FT5 Out': 'FT5_Out', 'MSP In': 'MSP_In', 'MSP Out': 'MSP_Out', 'Packing Out': 'Packing_Out', 'Shipping Out': 'Shipping_Out'}
-    data_paths = dir_folder(file_path)
+    data_paths = DirFolder(file_path)
     for data_path in data_paths:
         xl = pd.ExcelFile(data_path)
         sheet_names = xl.sheet_names

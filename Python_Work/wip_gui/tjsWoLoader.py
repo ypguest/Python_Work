@@ -19,7 +19,7 @@ pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
 
-def dir_folder(file_path):
+def DirFolder(file_path):
     file_paths = []
     for root, dirs, files in os.walk(file_path):
         for file in files:
@@ -43,14 +43,14 @@ def DataToWafer(data):
     return serdatas
 
 
-def tjsWoLoader():
+def TjsWoLoader():
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
     file_path = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_TJS_Workorder'
     items = ['FELotID', 'BE Lot ID', 'Assembly config', 'Picking sorts', 'Grade', 'Wafer qty', 'Wafer ID']
     rename = {'FELotID': 'FE_Lot_ID', 'BE Lot ID': 'BE_Lot_ID', 'Assembly config': 'Assembly_Config', 'Picking sorts': 'Picking_Sorts',
               'Grade': 'Grade', 'Wafer qty': 'Wafer_Qty', 'Wafer ID': 'Wafer_ID'}
-    data_paths = dir_folder(file_path)
+    data_paths = DirFolder(file_path)
     for data_path in data_paths:
         datas = pd.read_excel(data_path, header=0)
         datas = datas[items]
@@ -66,7 +66,7 @@ def tjsWoLoader():
 
 
 if __name__ == "__main__":
-    tjsWoLoader()
+    TjsWoLoader()
 
 
 

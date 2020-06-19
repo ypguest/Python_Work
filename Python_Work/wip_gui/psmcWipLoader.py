@@ -4,10 +4,9 @@
 """
 本脚本用于更新数据库中psmc_wip_report，同时将已经更新的文件路径记录到psmc_loader文件中
 在所有脚本中的顺序
-01 psmcWipLoader
-02 tjsTestYieldLoader
-03 tjsWoLoader
-
+01 PsmcWipLoader
+02 TjsTestYieldLoader
+03 TjsWoLoader
 
 """
 
@@ -19,7 +18,7 @@ import xlrd
 from sqlalchemy import create_engine
 
 
-def dir_folder(file_path):
+def DirFolder(file_path):
     file_paths = []
     for root, dirs, files in os.walk(file_path):
         for file in files:
@@ -37,7 +36,7 @@ def DataToWafer(data):
     return serdatas
 
 
-def file_repeat_chk(file_path):
+def FileRepeatChk(file_path):
     # todo 判断每天需要upload的文件
     sql_config = {
         'user': 'root',
@@ -59,7 +58,7 @@ def file_repeat_chk(file_path):
     for i in result:     # 将文件名元祖变成文件名列表
         for j in i:
             old_name.append(j)
-    data_paths = dir_folder(file_path)    # 查询所有文件的路径
+    data_paths = DirFolder(file_path)    # 查询所有文件的路径
     for data_path in data_paths:
         _, filename = os.path.split(data_path)
         new_name.append(filename)
@@ -75,7 +74,7 @@ def psmcWipLoader():
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
     # Todo 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径
-    data_paths = [file_path + '\\' + i for i in file_repeat_chk(file_path)]
+    data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
     for data_path in data_paths:
         # Todo 通过读取excel获取Current_Time， 有些文件打不开
         try:
