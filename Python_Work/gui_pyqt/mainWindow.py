@@ -21,11 +21,11 @@ class MainWindows(QMainWindow):
         toolbar = self.addToolBar(u'退出')
 
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
-        desktop = QApplication.desktop()
-        screenRect = desktop.screenGeometry()   # 获取屏幕的分辨率
-        height = screenRect.height()-500
-        width = screenRect.width()-500
-        self.setFixedSize(width, height)
+        screen = QApplication.desktop().screenGeometry()   # 获取屏幕的分辨率
+        width = int(screen.width() * 0.9)
+        height = int(screen.height() * 0.9)
+        self.setGeometry(int(screen.width() * 0.05), int(screen.height()*0.05), width, height)
+
 
 
 if __name__ == '__main__':
