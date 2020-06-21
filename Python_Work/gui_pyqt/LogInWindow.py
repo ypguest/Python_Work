@@ -18,11 +18,15 @@ class LogInWindow(QDialog):
 
         nameLabel = QLabel('&Name', self)       # 输入用户名
         nameLineEdit = QLineEdit(self)          # 输入单行的文本
+        nameLineEdit.setPlaceholderText("User Name")     # 设置文本框悬浮文字
         nameLabel.setBuddy(nameLineEdit)        # 设置伙伴控件， 即按Alt+N可以切换到QLabel关联的文本框
 
         passwordLabel = QLabel('&Password', self)     # 输入密码
         passwordLineEdit = QLineEdit(self)
+        passwordLineEdit.setPlaceholderText("Password")
+        passwordLineEdit.setEchoMode(QLineEdit.Password)
         passwordLabel.setBuddy(passwordLineEdit)
+
 
         btnOk = QPushButton('&OK')
         btnCancel = QPushButton('&Cannel')
