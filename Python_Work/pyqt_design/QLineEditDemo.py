@@ -23,9 +23,11 @@ class QLineEditDemo(QWidget):
         edit1.setAlignment(Qt.AlignRight)  # 右对齐
         edit1.setFont(QFont('Arial', 20))  # 设置字体
 
+        # 限制输入小数点后两位
         edit2 = QLineEdit()
         edit2.setValidator(QDoubleValidator(0.99, 99.99, 2))
 
+        # 需要一个输入掩码应用于IP地址
         edit3 = QLineEdit()
         edit3.setInputMask("000.000.000.000;_")
 
@@ -34,7 +36,7 @@ class QLineEditDemo(QWidget):
 
         edit5 = QLineEdit()
         edit5.setEchoMode(QLineEdit.Password)            # 设置回显模式为Password
-        edit5.editingFinished.connect(self.enterPress)   # 设置输入结束的槽
+        edit5.editingFinished.connect(self.enterPress)   # 设置输入结束的槽，即用户按下回车键，该函数就会被执行
 
         edit6 = QLineEdit("Hello PyQt5")
         edit6.setReadOnly(True)
@@ -49,11 +51,11 @@ class QLineEditDemo(QWidget):
         self.setLayout(formLayout)
 
     @staticmethod
-    def textChanged(self, text):
-        print("输入的内容"+text)
+    def textChanged(text):
+        print("输入的内容" + text)
 
     @staticmethod
-    def enterPress(self):
+    def enterPress():
         print('已输入值')
 
 

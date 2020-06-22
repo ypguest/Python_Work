@@ -20,6 +20,11 @@ class MainWindows(QMainWindow):
         status.showMessage('状态栏', 5000)
         toolbar = self.addToolBar(u'退出')
 
+
+
+
+
+
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
         screen = QApplication.desktop().screenGeometry()   # 获取屏幕的分辨率
         width = int(screen.width() * 0.9)

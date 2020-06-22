@@ -29,11 +29,9 @@ class QPushButtonDemo(QWidget):
 
         self.button1 = QPushButton("第一个按钮")   # 指定显示的文本, 采用面向对象的方法
         # self.button1.setText("第一个按钮")   第二种方法, 采用setText方法进行
-
-        self.button1.setCheckable(True)    # 创建复选框
-        self.button1.toggle()
-
-        # self.button1.clicked.connect(self.buttonState)   # 绑定Button1的状态
+        self.button1.setCheckable(True)    # 设置按钮是否已经被选中
+        self.button1.toggle()   # 使按钮可以在不同状态之间切换
+        self.button1.clicked.connect(self.buttonState)   # 绑定Button1的状态
         self.button1.clicked.connect(lambda: self.whichButton(self.button1))   # 通过Lambda表达式，强制对Button1进行绑定
         layout.addWidget(self.button1)
 

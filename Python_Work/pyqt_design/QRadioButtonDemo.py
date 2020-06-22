@@ -16,6 +16,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+
 class QRadioButtonDemo(QWidget):
     def __init__(self):
         super(QRadioButtonDemo, self).__init__()
@@ -33,6 +34,10 @@ class QRadioButtonDemo(QWidget):
         self.button2 = QRadioButton("单选按钮2")
         self.button2.toggled.connect(self.buttonState)    # 将按钮1的状态与buttonState的槽进行绑定
         layout.addWidget(self.button2)
+
+        self.button3 = QRadioButton("单选按钮3")
+        self.button3.toggled.connect(self.buttonState)    # 将按钮1的状态与buttonState的槽进行绑定
+        layout.addWidget(self.button3)
 
         self.setLayout(layout)
 

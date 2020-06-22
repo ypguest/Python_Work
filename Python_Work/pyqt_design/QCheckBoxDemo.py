@@ -31,6 +31,9 @@ class QRadioButtonDemo(QWidget):
         self.setWindowTitle('复选框控件演示')
         layout = QHBoxLayout()
 
+        groupBox = QGroupBox("CheckBoxes")
+        groupBox.setFlat(True)
+
         self.checkBox1 = QCheckBox('复选框控件1')
         self.checkBox1.setChecked(True)           # 是复选框处于被选中状态，该方法只能设置两种状态
         self.checkBox1.stateChanged.connect(lambda: self.checkboxState(self.checkBox1))
@@ -46,7 +49,11 @@ class QRadioButtonDemo(QWidget):
         self.checkBox3.stateChanged.connect(lambda: self.checkboxState(self.checkBox3))
         layout.addWidget(self.checkBox3)
 
-        self.setLayout(layout)
+        groupBox.setLayout(layout)
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(groupBox)
+
+        self.setLayout(mainLayout)
 
     def checkboxState(self, cb):
         check1Status = self.checkBox1.text() + ', isChecked=' + str(self.checkBox1.isChecked()) + ',checkState=' + str(self.checkBox1.checkState()) + '\n'
