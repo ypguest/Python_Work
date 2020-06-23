@@ -10,27 +10,41 @@ from PyQt5.QtGui import *
 class MainWindows(QMainWindow):
     def __init__(self):
         super(MainWindows, self).__init__()
-        self.SetScreen()
-
         self.iniUI()
+        self.MenuBar()
+        self.ToolBar()
 
     def iniUI(self):
-        self.setWindowTitle("UniIC 颗粒查询系统")
+        self.setWindowTitle("UniIC颗粒查询系统")
+        self.SetScreen()   # 设置窗口大小
+
+    def MenuBar(self):
+        layout = QHBoxLayout()
+        manubar = self.menuBar("MANUBAR")
+        file = manubar.addMenu("File")
+        Edit = manubar.addMenu("Edit")
+        view = manubar.addMenu("View")
+        Tools = manubar.addMenu("Tools")
+        self.setLayout(layout)
+
+    def ToolBar(self):
+        layout = QVBoxLayout()
+        toolbar = self.addToolBar('TOOLBAR')
+        new1 = QAction(QIcon('../pyqt_design/images/Bird.ico'), "Current Wip", self)
+        toolbar.addAction(new1)
+        open1 = QAction(QIcon('../pyqt_design/images/Cat.ico'), 'Wip History', self)
+        toolbar.addAction(open1)
+        self.setLayout(layout)
+
+    def StatusBar(self):
         status = self.statusBar()              # 创建状态栏，并悬停5s
         status.showMessage('状态栏', 5000)
-        toolbar = self.addToolBar(u'退出')
-
-
-
-
-
 
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
         screen = QApplication.desktop().screenGeometry()   # 获取屏幕的分辨率
         width = int(screen.width() * 0.9)
         height = int(screen.height() * 0.9)
         self.setGeometry(int(screen.width() * 0.05), int(screen.height()*0.05), width, height)
-
 
 
 if __name__ == '__main__':
