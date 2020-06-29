@@ -3,30 +3,74 @@
 """
 
 import sys
+import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import pymysql
 
 
 class MainWindows(QWidget):
     def __init__(self):
         super(MainWindows, self).__init__()
+
+        self.SetScreen()   # 设置窗口大小
+        self.line = QtWidgets.QFrame(Form)
+        self.line.setGeometry(QtCore.QRect(250, 270, 871, 20))
+        self.line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.line_2 = QtWidgets.QFrame(Form)
+        self.line_2.setGeometry(QtCore.QRect(240, 10, 16, 1001))
+        self.line_2.setFrameShape(QtWidgets.QFrame.VLine)
+        self.line_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_2.setObjectName("line_2")
         self.iniUI()
 
     def iniUI(self):
-        self.setWindowTitle("UniIC颗粒查询系统")
-        self.SetScreen()   # 设置窗口大小
 
-        layout = QVBoxLayout()
+
+        layout = QHBoxLayout()
 
         ProdQuery1 = ProdNickQuery()
         prodQuery2 = ProdQuery()
 
+        # todo 增加lot 查询界面
+        layoutQuery = QVBoxLayout()
+        lineEdit = QLineEdit("Lot ID")
+        QueryButton = QPushButton("Query")
+        CancelButton = QPushButton("Cancel")
+
+        layoutQuery.addWidget(lineEdit)
+        layoutQuery.addWidget(QueryButton)
+        layoutQuery.addWidget(CancelButton)
+
+        spacerItem = QSpacerItem(200, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)   # 增加横向弹簧线
+
+        # todo 增加Function界面
+        layoutFun = QVBoxLayout()
+        lineEditFun = QPushButton("New WIP")
+        allWipButton = QPushButton("All WIP")
+        holdTButton = QPushButton("Hold Time")
+        commButton = QPushButton("Comment Update")
+        spacerFunTop = QSpacerItem(1, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)           # 增加竖向弹簧线
+        spacerFunBot = QSpacerItem(1, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)           # 增加竖向弹簧线
+
+        layoutFun.addItem(spacerFunTop)
+        layoutFun.addWidget(lineEditFun)
+        layoutFun.addWidget(allWipButton)
+        layoutFun.addWidget(holdTButton)
+        layoutFun.addWidget(commButton)
+        layoutFun.addItem(spacerFunBot)
+
         layout.addWidget(ProdQuery1)
         layout.addWidget(prodQuery2)
+        layout.addItem(layoutQuery)
+        layout.addItem(spacerItem)
+        layout.addItem(layoutFun)
 
         self.setLayout(layout)
+
+        ProdQuery1.sendmsg.connect(prodQuery2.getmsg)  # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
 
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
         screen = QApplication.desktop().screenGeometry()   # 获取屏幕的分辨率
@@ -37,11 +81,13 @@ class MainWindows(QWidget):
 
 # todo 生成Product查询的ListView, 给出Nick Name
 class ProdNickQuery(QWidget):
+    sendmsg = pyqtSignal(str)
+
     def __init__(self):
         super(ProdNickQuery, self).__init__()
         self.setFixedSize(300, 200)
 
-        self.groupbox = QGroupBox('Product Nick Name Select', self)   # 增加GroupBox框体
+        self.groupbox = QGroupBox('Product Family Select', self)   # 增加GroupBox框体
         self.groupbox.setFixedSize(300, 200)  # 设置控件的大小
         self.groupbox.setAlignment(Qt.AlignLeft)    # 将QGroup的名称放到左边
 
@@ -53,11 +99,15 @@ class ProdNickQuery(QWidget):
         listModel.setStringList(self.list)       # 将数据和模型进行关联
         self.listview.setModel(listModel)             # 模型与空间关联
         self.listview.clicked.connect(self.clicked)
-        layout.addWidget(self.listview, 1, 0, 3, 4)               # 将控件放入栅格布局，起始行，列，跨越行，列
+
         self.lineEdit = QLineEdit("")      # 确认的信息显示到Label中
-        self.lineEdit.setPlaceholderText("Please Select Nick Name")
+        self.lineEdit.setPlaceholderText("Please Select Product Family")
         self.Button1 = QPushButton("OK")
         self.Button1.setFixedWidth(35)
+        self.Button1.clicked.connect(self.sendEditContent)
+
+        # todo 将控件放入栅格布局，起始行，列，跨越行，列
+        layout.addWidget(self.listview, 1, 0, 3, 4)
         layout.addWidget(self.lineEdit, 5, 0, 1, 3)
         layout.addWidget(self.Button1, 5, 3, 1, 1)
 
@@ -65,6 +115,10 @@ class ProdNickQuery(QWidget):
 
     def clicked(self, qModelIndex):  # 点击后将值输入到LineEdit内
         self.lineEdit.setText(self.list[qModelIndex.row()])
+
+    def sendEditContent(self):
+        content = self.lineEdit.text()
+        self.sendmsg.emit(content)
 
 
 # todo 生成Product_ID与Product_Version的联和查询
@@ -109,7 +163,7 @@ class ProdQuery(QWidget):
 
     def clickedPid(self, qModelIndex):
         self.lineEdit.setText(self.listPid[qModelIndex.row()])      # 将LineEdit里的内容进行写入
-        self.listviewVer = ProdQueryList(self.listPid[qModelIndex.row()])     # 创建数据源
+        self.listviewVer = ProdQueryVerList(self.listPid[qModelIndex.row()])     # 创建数据源
         self.listModeVer.setStringList(self.listviewVer)  # 将数据和模型进行关联
 
     def clickedVer(self, qModelIndex):
@@ -119,6 +173,12 @@ class ProdQuery(QWidget):
             self.lineEdit.setText(self.lineEdit.text() + ',' + self.listviewVer[qModelIndex.row()])
         else:
             self.lineEdit.setText(self.lineEdit.text().split(",")[0] + ',' + self.listviewVer[qModelIndex.row()])
+
+    def getmsg(self, val):
+        self.listPid = ProdQueryIdList(val)
+        self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
+        self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
+        self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
 
 
 # todo 用于class ProdQuery中, 用于给出关键字Item，并查找psmc_product_version表中所以的匹配值
@@ -134,7 +194,7 @@ def ProdList(item):
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
-            cursor.execute('SELECT distinct %s FROM psmc_product_version' % item)
+            cursor.execute('SELECT DISTINCT %s FROM psmc_product_version ORDER By %s' % (item, item))
             result = cursor.fetchall()
     finally:
         connection.close()
@@ -142,7 +202,7 @@ def ProdList(item):
 
 
 # todo 用于Class ProdQuery中, 用于给定UniIC_Product_Id，查找出对应的所有UniIC_Product_Version
-def ProdQueryList(arg):
+def ProdQueryVerList(item):
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
@@ -154,7 +214,27 @@ def ProdQueryList(arg):
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
-            cursor.execute("SELECT distinct UniIC_Product_Version FROM psmc_product_version WHERE UniIC_Product_Id = '%s'" % arg)
+            cursor.execute("SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE UniIC_Product_Id = '%s' ORDER By UniIC_Product_Version" % item)
+            result = cursor.fetchall()
+    finally:
+        connection.close()
+    return [result[i][0] for i in range(len(result))]
+
+
+# todo 用于Class ProdQuery中, 用于给定UniIC_Product_Id，查找出对应的所有UniIC_Product_Version
+def ProdQueryIdList(item):
+    sql_config = {
+        'user': 'root',
+        'password': 'yp*963.',
+        'host': 'localhost',
+        'database': 'testdb',
+        'charset': 'utf8'
+    }
+    connection = pymysql.connect(**sql_config)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('USE configdb;')
+            cursor.execute("SELECT DISTINCT UniIC_Product_ID FROM psmc_product_version WHERE Nick_Name = '%s' ORDER By UniIC_Product_ID" % item)
             result = cursor.fetchall()
     finally:
         connection.close()
