@@ -42,7 +42,7 @@ def FileRepeatChk(file_path):
         'user': 'root',
         'password': 'yp*963.',
         'host': 'localhost',
-        'database': 'testdb',
+        'database': 'configdb',
         'charset': 'utf8'
     }
     connection = pymysql.connect(**sql_config)

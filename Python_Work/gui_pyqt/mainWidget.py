@@ -7,68 +7,71 @@ import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from Python_Work.gui_pyqt.ProdQuery import ProdNickQuery, ProdQuery
+from Python_Work.gui_pyqt.ProdQuery import NickNameQuery, ProdQuery, FunButton, TextQuery
 
 
 class MainWidget(QWidget):
     def __init__(self):
         super(MainWidget, self).__init__()
         self.SetScreen()  # 设置窗口大小
-        self.iniUI()
 
-        # -------画分割线-------
-        self.Hline = QFrame(self)
-        self.Hline.setGeometry(QRect(300, 220, self.width()-220, 20))
-        self.Hline.setFrameShape(QFrame.HLine)
-        self.Hline.setFrameShadow(QFrame.Sunken)
-        self.Vline = QFrame(self)
-        self.Vline.setGeometry(QRect(200, 0, 200, self.height()))
-        self.Vline.setFrameShape(QFrame.VLine)
-        self.Vline.setFrameShadow(QFrame.Sunken)
+        # -------------画分割线-------------
+        self.mainline1 = QFrame(self)
+        self.mainline1.setGeometry(QRect(0, 0, 300, self.height()))    # QRect(起始的x坐标，起始的y坐标，宽度，高度)
+        self.mainline1.setFrameStyle(QFrame.Box | QFrame.Sunken)
+        self.mainline2 = QFrame(self)
+        self.mainline2.setGeometry(QRect(300, 0, self.width()-300, 230))
+        self.mainline2.setFrameStyle(QFrame.Box | QFrame.Sunken)
+        self.mainline3 = QFrame(self)
+        self.mainline3.setGeometry(QRect(300, 230, self.width()-300, self.height()-230))
+        self.mainline3.setFrameStyle(QFrame.Box | QFrame.Sunken)
 
-    def iniUI(self):
-        layout = QHBoxLayout()
+        # -------------设置mainlayout1的树控件-------------
+        mainlayout1 = QHBoxLayout()
+        self.tree = QTreeWidget()     # 创建树控件
+        self.tree.setColumnCount(1)         # 为树控件指定列数
 
-        ProdQuery1 = ProdNickQuery()
-        prodQuery2 = ProdQuery()
+        self.tree.setHeaderHidden(True)
+        root1 = QTreeWidgetItem(self.tree)      # 设置根节点
+        root1.setText(0, 'WIP')
 
-        # todo 增加lot 查询界面
-        layoutQuery = QVBoxLayout()
-        lineEdit = QLineEdit("Lot ID")
-        QueryButton = QPushButton("Query")
-        CancelButton = QPushButton("Cancel")
+        child1 = QTreeWidgetItem(root1)         # 添加子节点1
+        child1.setText(0, 'Wafer WIP')
 
-        layoutQuery.addWidget(lineEdit)
-        layoutQuery.addWidget(QueryButton)
-        layoutQuery.addWidget(CancelButton)
+        child2 = QTreeWidgetItem(root1)         # 添加子节点2
+        child2.setText(0, 'Component WIP')
 
-        spacerItem = QSpacerItem(200, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)  # 增加横向弹簧线
+        child3 = QTreeWidgetItem(root1)         # 添加子节点3
+        child3.setText(0, 'System WIP')
 
-        # todo 增加Function界面
-        layoutFun = QVBoxLayout()
-        lineEditFun = QPushButton("New WIP")
-        allWipButton = QPushButton("All WIP")
-        holdTButton = QPushButton("Hold Time")
-        commButton = QPushButton("Comment Update")
-        spacerFunTop = QSpacerItem(1, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)  # 增加竖向弹簧线
-        spacerFunBot = QSpacerItem(1, 20, QSizePolicy.Minimum, QSizePolicy.Expanding)  # 增加竖向弹簧线
+        mainlayout1.addWidget(self.tree)
+        self.mainline1.setLayout(mainlayout1)
 
-        layoutFun.addItem(spacerFunTop)
-        layoutFun.addWidget(lineEditFun)
-        layoutFun.addWidget(allWipButton)
-        layoutFun.addWidget(holdTButton)
-        layoutFun.addWidget(commButton)
-        layoutFun.addItem(spacerFunBot)
+        # -------------添加mainlayout2的Qeuery控件-------------
+        mainlayout2 = QHBoxLayout()
+        self.ProdQuery1 = NickNameQuery()
+        self.ProdQuery2 = ProdQuery()
+        self.ProdQuery3 = FunButton()
+        self.ProdQuery4 = TextQuery()
 
-        layout.addWidget(ProdQuery1)
-        layout.addWidget(prodQuery2)
-        layout.addItem(layoutQuery)
-        layout.addItem(spacerItem)
-        layout.addItem(layoutFun)
+        spacerItem1 = QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)  # 增加横向弹簧线
+        spacerItem2 = QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)  # 增加横向弹簧线
 
-        self.setLayout(layout)
+        mainlayout2.addWidget(self.ProdQuery1)
+        mainlayout2.addWidget(self.ProdQuery2)
+        mainlayout2.addWidget(self.ProdQuery3)
+        mainlayout2.addItem(spacerItem1)
+        mainlayout2.addWidget(self.ProdQuery4)
 
-        ProdQuery1.sendmsg.connect(prodQuery2.getmsg)  # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
+        self.ProdQuery1.sendmsg.connect(self.ProdQuery2.getmsg)  # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
+
+        self.mainline2.setLayout(mainlayout2)
+
+        # -------------添加mainlayout3的数据控件-------------
+        mainlayout3 = QHBoxLayout()
+        self.tableWidget = QTableWidget()
+        mainlayout3.addWidget(self.tableWidget)
+        self.mainline3.setLayout(mainlayout3)
 
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
         screen = QApplication.desktop().screenGeometry()  # 获取屏幕的分辨率

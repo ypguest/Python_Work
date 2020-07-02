@@ -12,8 +12,8 @@ import pymysql
 from sqlalchemy import create_engine
 
 
-def LotStart():
-    # Todo 确认每个lot的Wafer start time以及Wafer Count;
+# -------根据psmc_wip_report按Lot整理出Lot_Tracing_Table, 要求实施可以更新当前Product ID, Qty, 当前layer, 预期/实际shipping时间-------------
+class AutoProcessData(object):
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
@@ -22,22 +22,27 @@ def LotStart():
         'charset': 'utf8'
     }
     connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
-        cursor.execute("SELECT Wafer_Start_Date, Lot_ID, MLot_ID, Qty, `Current_Time` FROM psmc_wip_report WHERE Layer = '1F' ORDER BY `Current_time` ASC;")
-        sql_results = cursor.fetchall()
-        columnDes = cursor.description
-        connection.close()
-    columnNames = [columnDes[i][0] for i in range(len(columnDes))]
-    df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)
-    myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
-    for index, row in df.iterrows():
-        # noinspection PyBroadException
-        try:
-            Lot_start = pd.DataFrame(row[:-1]).T
-            pd.io.sql.to_sql(Lot_start, 'psmc_lot_start', con=myconnect, schema='testdb', if_exists='append', index=False)
-        except Exception:
-            continue
+
+    def PsmcLotTracingTable(self):
+        with self.connection.cursor() as cursor:
+            cursor.execute('USE testdb;')
+            cursor.execute("SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, "
+                           "`#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_report WHERE")
+
+            cursor.execute("SELECT Wafer_Start_Date, Lot_ID, MLot_ID, Qty, `Current_Time` FROM psmc_wip_report WHERE Layer = '1F' ORDER BY `Current_time` ASC;")
+            sql_results = cursor.fetchall()
+            columnDes = cursor.description
+            self.connection.close()
+        columnNames = [columnDes[i][0] for i in range(len(columnDes))]
+        df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)
+        myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/testdb?charset=utf8')
+        for index, row in df.iterrows():
+            # noinspection PyBroadException
+            try:
+                Lot_start = pd.DataFrame(row[:-1]).T
+                pd.io.sql.to_sql(Lot_start, 'psmc_lot_start', con=myconnect, schema='testdb', if_exists='append', index=False)
+            except Exception:
+                continue
 
 
 def LotAtWH():
