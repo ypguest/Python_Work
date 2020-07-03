@@ -3,13 +3,11 @@
 """
 
 import sys
-import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from Python_Work.gui_pyqt.MainLayout2 import NickNameQuery, ProdQuery, FunButton, TextQuery
-from Python_Work.gui_pyqt.WipTable import WipTable
-
+from Python_Work.gui_pyqt.MainLayout3 import WipTable
 
 
 class MainWidget(QWidget):
@@ -57,7 +55,6 @@ class MainWidget(QWidget):
         self.ProdQuery4 = TextQuery()
 
         spacerItem1 = QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)  # 增加横向弹簧线
-        spacerItem2 = QSpacerItem(10, 1, QSizePolicy.Expanding, QSizePolicy.Minimum)  # 增加横向弹簧线
 
         mainlayout2.addWidget(self.ProdQuery1)
         mainlayout2.addWidget(self.ProdQuery2)
