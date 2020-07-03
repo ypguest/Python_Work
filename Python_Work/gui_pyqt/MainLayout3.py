@@ -16,12 +16,6 @@ import pandas as pd
 import numpy as np
 import pymysql
 
-# pd设置
-
-pd.set_option('display.max_columns', None)   # 显示不省略行
-pd.set_option('display.max_rows', None)      # 显示不省略列
-pd.set_option('display.width', None)         # 显示不换行
-
 
 class WipTable(QWidget):
     def __init__(self, queryItem):

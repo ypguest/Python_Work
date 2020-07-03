@@ -5,7 +5,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from Python_Work.gui_pyqt.ProdQuery import ProdNickQuery, ProdQuery
+from Python_Work.gui_pyqt.MainWidget import MainWidget
 
 
 class MainWindows(QMainWindow):
@@ -14,10 +14,11 @@ class MainWindows(QMainWindow):
         self.iniUI()
         self.MenuBar()
         self.ToolBar()
+        self.setCentralWidget(MainWidget())
 
     def iniUI(self):
         self.setWindowTitle("UniIC颗粒查询系统")
-        self.SetScreen()   # 设置窗口大小
+        self.SetScreen()  # 设置窗口大小
 
 
 
@@ -42,6 +43,12 @@ class MainWindows(QMainWindow):
     def StatusBar(self):
         status = self.statusBar()              # 创建状态栏，并悬停5s
         status.showMessage('状态栏', 5000)
+
+    def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
+        screen = QApplication.desktop().screenGeometry()  # 获取屏幕的分辨率
+        width = int(screen.width())
+        height = int(screen.height())
+        self.setGeometry(0, 0, width, height)
 
 
 

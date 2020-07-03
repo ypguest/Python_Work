@@ -68,15 +68,16 @@ class MainWidget(QWidget):
 
         # -------------添加mainlayout3的数据控件-------------
         mainlayout3 = QHBoxLayout()
-        self.tableWidget = WipTable()
+        product = 'AAPS70D1D-0E01'
+        self.tableWidget = WipTable(product)
         mainlayout3.addWidget(self.tableWidget)
         self.mainline3.setLayout(mainlayout3)
 
     def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
         screen = QApplication.desktop().screenGeometry()  # 获取屏幕的分辨率
-        width = int(screen.width() * 0.9)
+        width = int(screen.width())
         height = int(screen.height() * 0.9)
-        self.setGeometry(int(screen.width() * 0.05), int(screen.height() * 0.05), width, height)
+        self.setGeometry(0, int(screen.height() * 0.05), width, height)
 
 
 if __name__ == '__main__':
