@@ -7,7 +7,9 @@ import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from Python_Work.gui_pyqt.ProdQuery import NickNameQuery, ProdQuery, FunButton, TextQuery
+from Python_Work.gui_pyqt.MainLayout2 import NickNameQuery, ProdQuery, FunButton, TextQuery
+from Python_Work.gui_pyqt.WipTable import WipTable
+
 
 
 class MainWidget(QWidget):
@@ -69,7 +71,7 @@ class MainWidget(QWidget):
 
         # -------------添加mainlayout3的数据控件-------------
         mainlayout3 = QHBoxLayout()
-        self.tableWidget = QTableWidget()
+        self.tableWidget = WipTable()
         mainlayout3.addWidget(self.tableWidget)
         self.mainline3.setLayout(mainlayout3)
 

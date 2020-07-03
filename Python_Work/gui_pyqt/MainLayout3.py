@@ -15,8 +15,13 @@ import datetime
 import pandas as pd
 import numpy as np
 import pymysql
-import xlrd
-from sqlalchemy import create_engine
+
+# pd设置
+
+pd.set_option('display.max_columns', None)   # 显示不省略行
+pd.set_option('display.max_rows', None)      # 显示不省略列
+pd.set_option('display.width', None)         # 显示不换行
+
 
 class WipTable(QWidget):
     def __init__(self):
@@ -29,27 +34,48 @@ class WipTable(QWidget):
 
         product = 'AAPS70D1D-0E01'
         data = ProductLotQuery(product)
-        DataRowCount = data.shape[0]       # 行
-        DataColumnCount = data.shape[1]    # 列
 
-        self.TableWidget = QTableWidget()
-        self.TableWidget.setRowCount(DataRowCount)
-        self.TableWidget.setColumnCount(DataColumnCount)
-        self.TableWidget.setHorizontalHeaderLabels(list(data))
+        self.model = PandasModel(data)
 
-        # 添加数据
-        # item11 = QStandardItem('10')
-        # item12 = QStandardItem('雷神')
-        # item13 = QStandardItem('2000')
-        # self.model.setItem(0, 0, item11)
-        # self.model.setItem(0, 1, item12)
-        # self.model.setItem(0, 2, item13)
+        self.TableWidget = QTableView()
+
+        self.TableWidget.setModel(self.model)
+
+        # --------设置Table的格式-----------------
+
+        # 表格禁止编辑
+        self.TableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.TableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # 行间隔变色（boolen）
+        self.TableWidget.setAlternatingRowColors(1)
 
         layout.addWidget(self.TableWidget)
         self.setLayout(layout)
 
-        # 添加数据
-        item11 = QStandardItem()
+
+# ------------定义了一个类，将dataframe写入并以table展现--------------------
+class PandasModel(QAbstractTableModel):
+
+    def __init__(self, data):
+        QAbstractTableModel.__init__(self)
+        self._data = data
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parnet=None):
+        return self._data.shape[1]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return str(self._data.iloc[index.row(), index.column()])
+        return None
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self._data.columns[col]
+        return None
 
 
 # ---------------返回查询的数据--------------------
@@ -71,12 +97,15 @@ def ProductLotQuery(Item):
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
         cursor.execute(sql)
+
         sql_results = cursor.fetchall()
         columnDes = cursor.description
         connection.close()
         columnNames = [columnDes[i][0] for i in range(len(columnDes))]  # 获取表头
-    df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)  # 将从数据库中取出的元祖数据转换为dataframe
-    df.drop_duplicates(subset=['Lot_ID'], keep='first', inplace=True)  # 将dataframe中Lot_id相同的数据，只保留第一次的
+    df = pd.DataFrame([pd.Series(i, index=columnNames).astype(str) for i in sql_results], columns=columnNames)  # 将从数据库中取出的元祖数据转换为dataframe
+    for index, row in df.iterrows():
+        if row['Qty'] == '0':
+            df.drop(index, inplace=True)
     return df
 
 
