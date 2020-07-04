@@ -6,7 +6,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from Python_Work.gui_pyqt.MainLayout2 import NickNameQuery, ProdQuery, FunButton, TextQuery
+from Python_Work.gui_pyqt.MainLayout2 import FamilyQuery, ProdQuery, FunButton, TextQuery
 from Python_Work.gui_pyqt.MainLayout3 import WipTable
 
 
@@ -49,7 +49,7 @@ class MainWidget(QWidget):
 
         # -------------添加mainlayout2的Qeuery控件-------------
         mainlayout2 = QHBoxLayout()
-        self.ProdQuery1 = NickNameQuery()
+        self.ProdQuery1 = FamilyQuery()
         self.ProdQuery2 = ProdQuery()
         self.ProdQuery3 = FunButton()
         self.ProdQuery4 = TextQuery()
@@ -62,18 +62,26 @@ class MainWidget(QWidget):
         mainlayout2.addItem(spacerItem1)
         mainlayout2.addWidget(self.ProdQuery4)
 
-        self.ProdQuery1.sendmsg.connect(self.ProdQuery2.getmsg)  # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
-
         self.mainline2.setLayout(mainlayout2)
 
         # -------------添加mainlayout3的数据控件-------------
         mainlayout3 = QHBoxLayout()
-        product = 'AAPS70D1D-0E01'
-        self.tableWidget = WipTable(product)
+        self.tableWidget = WipTable()
         mainlayout3.addWidget(self.tableWidget)
         self.mainline3.setLayout(mainlayout3)
 
-    def SetScreen(self):  # 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi
+        # ------------模块间的通讯--------------------------
+        self.ProdQuery1.sendToProQuery.connect(self.ProdQuery2.getMsg)   # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
+
+        self.ProdQuery3.sendmsg.connect(self.ProdQuery1.sendMsg)      # 功能按钮被单击，触发sendMeg函数
+        self.ProdQuery3.sendmsg.connect(self.ProdQuery2.sendMsg)
+
+        self.ProdQuery1.sendmsg.connect(self.tableWidget.getQue1Msg)
+        self.ProdQuery2.sendmsg.connect(self.tableWidget.getQue2Msg)
+        self.ProdQuery3.sendmsg.connect(self.tableWidget.getFunMsg)   # 功能按钮被单击，触发功能按钮的信息给tableWidget
+
+    # -----------# 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi-------------
+    def SetScreen(self):
         screen = QApplication.desktop().screenGeometry()  # 获取屏幕的分辨率
         width = int(screen.width())
         height = int(screen.height() * 0.9)

@@ -20,8 +20,6 @@ class MainWindows(QMainWindow):
         self.setWindowTitle("UniIC颗粒查询系统")
         self.SetScreen()  # 设置窗口大小
 
-
-
     def MenuBar(self):
         layout = QHBoxLayout()
         manubar = self.menuBar()
@@ -49,8 +47,6 @@ class MainWindows(QMainWindow):
         width = int(screen.width())
         height = int(screen.height())
         self.setGeometry(0, 0, width, height)
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
