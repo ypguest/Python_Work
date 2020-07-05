@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-设置sql操作相关的类，涉及到
+设置sql操作相关的类，更新，插入等参数均为dict, 查询参数为list
 """
 import MySQLdb
 
@@ -29,9 +29,18 @@ class MySQL(object):
         """关闭数据库"""
         self.cur.close()
         self.conn.close()
-
+        
     def commit(self):
         self.conn.commit()
+
+    def getLastInsertId(self):
+        return self.cur.lastrowid
+
+    def rowcount(self):
+        return self.cur.rowcount
+
+    def rollback(self):
+        self.conn.rollback()
 
     def selectDb(self, db):
         """选择数据库"""
@@ -40,10 +49,25 @@ class MySQL(object):
         except:
             raise Exception("db error,please check the sql config.")
 
-    def fetchRow(self, sql_str, params=()):
+    def fetchRow(self, tbname, items='*', condition=()):
         """根据sql语句查询数据库，返回一行结果，并关闭数据库"""
+        _items = []
+        _arg = []
+        _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        if isinstance(condition, tuple):
+            _arg = condition
+        else:
+            _columns = condition.keys()
+            for key in condition.keys():
+                _items.append("`%s` = %%s" % key)
+                _arg.append(condition[key])
+            _items = ' and '.join(_items)
+        if isinstance(_items, str):
+            _sql_str = " WHERE ".join([_prefix, str(_items)])
+        else:
+            _sql_str = _prefix
         try:
-            self.cur.execute(sql_str, params)
+            self.cur.execute(_sql_str, _arg)
             _result = self.cur.fetchone()
             _desc = self.cur.description
             self.close()
@@ -53,10 +77,25 @@ class MySQL(object):
             raise Exception("fetchRow Error, please check sql description")
         return _desc, _result
 
-    def fetchAll(self, sql_str, params=()):
+    def fetchAll(self, tbname, items='*', condition=()):
         """根据sql语句查询数据库，返回所有结果，并关闭数据库（表头及数据以list形式返回）"""
+        _items = []
+        _arg = []
+        _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        if isinstance(condition, tuple):
+            _arg = condition
+        else:
+            _columns = condition.keys()
+            for key in condition.keys():
+                _items.append("`%s` = %%s" % key)
+                _arg.append(condition[key])
+            _items = ' and '.join(_items)
+        if isinstance(_items, str):
+            _sql_str = " WHERE ".join([_prefix, str(_items)])
+        else:
+            _sql_str = _prefix
         try:
-            self.cur.execute(sql_str, params)
+            self.cur.execute(_sql_str, _arg)
             _result = self.cur.fetchall()
             _desc = self.cur.description           # description包含name, type_code, display_size, internal_size, precision, scale, null_ok
             self.close()
@@ -66,10 +105,10 @@ class MySQL(object):
             raise Exception("fetchRow Error, pls check sql description")
         return _desc, _result
 
-    def insertRow(self, table_name, data):
+    def insertRow(self, tbname, data):
         """向数据库table_name中插入一行数据data, data必须是字典类型{'xxx': ['xxxx'], 'xxx':['xxxx']}"""
         columns = data.keys()
-        _prefix = "".join(['INSERT INTO `', table_name, '`'])
+        _prefix = "".join(['INSERT INTO `', tbname, '`'])
         _fields = ",".join(["".join(['`', column, '`']) for column in columns])
         _values = ",".join(["%s" for i in range(len(columns))])
         _sql = "".join([_prefix, "(", _fields, ") VALUES (", _values, ")"])
@@ -77,11 +116,11 @@ class MySQL(object):
         self.cur.execute(_sql, tuple(_params))
         self.commit()
 
-    def insertMany(self, table_name, data):
+    def insertMany(self, tbname, data):
         """向数据库table_name中插入一行数据data, data必须是字典类型{'xxx': ['xx','xxx','xxx','xxx'], 'xxx':['xx','xxx','xxx','xxx']}"""
         """executemany 支持的_params格式， (['xx', 'xxx', 'xxx', 'xxx'],['xx', 'xxx', 'xxx', 'xxx'])"""
         columns = data.keys()
-        _prefix = "".join(['INSERT INTO `', table_name, '`'])
+        _prefix = "".join(['INSERT INTO `', tbname, '`'])
         _fields = ",".join(["".join(['`', column, '`']) for column in columns])
         _values = ",".join(["%s" for i in range(len(columns))])
         _sql = "".join([_prefix, "(", _fields, ") VALUES (", _values, ")"])
@@ -94,40 +133,51 @@ class MySQL(object):
         self.cur.executemany(_sql, tuple(_params))
         self.commit()
 
-    # def update(self, tbname, data, condition):
-    #     _fields = []
-    #     _prefix = "".join(['UPDATE `', tbname, '`', 'SET'])
-    #     for key in data.keys():
-    #         _fields.append("%s = %s" % (key, data[key]))
-    #     _sql = "".join([_prefix, _fields, "WHERE", condition])
-    #
-    #     return self.cur.execute(_sql)
-    #
-    # def delete(self, tbname, condition):
-    #     _prefix = "".join(['DELETE FROM  `', tbname, '`', 'WHERE'])
-    #     _sql = "".join([_prefix, condition])
-    #     return self.cur.execute(_sql)
-    #
-    # def getLastInsertId(self):
-    #     return self.cur.lastrowid
-    #
-    # def rowcount(self):
-    #     return self.cur.rowcount
-    #
+    def update(self, tbname, data, condition):
+        """更新数据库table_name中条件为condition的行，更新的数据为data, data/condtiion均必须是字典类型{'xxx': ['xx','xxx','xxx','xxx'], 'xxx':['xx','xxx','xxx','xxx']}"""
+        _data = []
+        _condition = []
+        _prefix = "".join(['UPDATE `', tbname, '`', 'SET'])
+        for key in data.keys():
+            _data.append("`%s` = '%s'" % (key, data[key]))
+        _data = ', '.join(_data)
+        for key in condition.keys():
+            _condition.append("`%s` = '%s'" % (key, condition[key]))
+        _condition = ' and '.join(_condition)
+        _sql = " ".join([_prefix, _data, "WHERE", _condition])
+        self.cur.execute(_sql)
+        self.commit()
 
-    #
-    # def rollback(self):
-    #     self.conn.rollback()
-    #
-
+    def delete(self, tbname, condition):
+        """删除数据库table_name中条件为condition的行，条件必须是字典类型{'xxx': ['xx','xxx','xxx','xxx'], 'xxx':['xx','xxx','xxx','xxx']}"""
+        _condition = []
+        _prefix = "".join(['DELETE FROM `', tbname, '` ', 'WHERE'])
+        for key in condition.keys():
+            _condition.append("`%s` = '%s'" % (key, condition[key]))
+        _condition = ' and '.join(_condition)
+        _sql = " ".join([_prefix, _condition])
+        return self.cur.execute(_sql)
 
 
 if __name__ == '__main__':
-    mysql = MySQL()
-    mysql.selectDb('testdb')
-    tbname = 'psmc_lot_tracing_table'
-    datas = {'Lot_ID': ['BPH2870A0', 'BPH2870B0'], 'Current_Chip_Name':['AAYRGKS4B-TM01','AAYRGKS4B-TM01']}
-    mysql.insertMany(tbname, datas)
+    """用法示例：选取，插入，更新，删除"""
+    # mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
+    # mysql.selectDb('testdb')  # 连接数据库
+
+    """具体操作定义：选取单行或多行"""
+    # table = 'psmc_lot_tracing_table'
+    # item = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name']
+    # condition = {'Fab': 'P2', 'Layer': 'WH'}
+    # data = mysql.fetchAll(table)
+    # mysql.cur.close()
+    # print(data)
+
+    """具体操作定义：插入单行或多行"""
+    # table = 'psmc_lot_tracing_table'
+    # data = {'Lot_ID': ['BPH2870A0'], 'Current_Chip_Name': ['AAYRGKS4B-TM01']}
+    # mysql.insertRow(table, data)
+    # mysql.cur.close()
+    # mysql.conn.close()
 
 
 
