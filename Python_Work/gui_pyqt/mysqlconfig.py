@@ -49,6 +49,18 @@ class MySQL(object):
         except:
             raise Exception("db error,please check the sql config.")
 
+    def sqlAll(self, _sql_str, _arg=()):
+        try:
+            self.cur.execute(_sql_str)
+            _result = self.cur.fetchall()
+            _desc = self.cur.description
+            self.close()
+            _desc = [_desc[i][0] for i in range(len(_desc))]  # 获取表头
+            _result = list(_result)
+        except:
+            raise Exception("fetchRow Error, please check sql description")
+        return _desc, _result
+
     def fetchRow(self, tbname, items='*', condition=()):
         """根据sql语句查询数据库，返回一行结果，并关闭数据库"""
         _items = []
@@ -81,9 +93,12 @@ class MySQL(object):
         """根据sql语句查询数据库，返回所有结果，并关闭数据库（表头及数据以list形式返回）"""
         _items = []
         _arg = []
-        _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
-        if isinstance(condition, tuple):
-            _arg = condition
+        if items == '*':
+            _prefix = "SELECT * FROM `{}`".format(tbname)
+        else:
+            _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        if condition == {} or condition == ():
+            _arg = ()
         else:
             _columns = condition.keys()
             for key in condition.keys():
@@ -161,16 +176,16 @@ class MySQL(object):
 
 if __name__ == '__main__':
     """用法示例：选取，插入，更新，删除"""
-    # mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
-    # mysql.selectDb('testdb')  # 连接数据库
+    mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
+    mysql.selectDb('configdb')  # 连接数据库
 
     """具体操作定义：选取单行或多行"""
-    # table = 'psmc_lot_tracing_table'
-    # item = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name']
-    # condition = {'Fab': 'P2', 'Layer': 'WH'}
-    # data = mysql.fetchAll(table)
-    # mysql.cur.close()
-    # print(data)
+    table = 'psmc_product_version'
+    item = ['PowerChip_Product_ID']
+    condition = {'Nick_Name': 'Hanlu'}
+    data = mysql.fetchAll(tbname=table, items=item, condition=condition)
+    mysql.cur.close()
+    print(data)
 
     """具体操作定义：插入单行或多行"""
     # table = 'psmc_lot_tracing_table'

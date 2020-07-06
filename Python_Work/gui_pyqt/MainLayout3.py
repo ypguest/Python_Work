@@ -11,6 +11,11 @@ import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from Python_Work.gui_pyqt.mysqlconfig import MySQL
+
+pd.set_option('display.max_columns', None)   # 显示不省略行
+pd.set_option('display.max_rows', None)      # 显示不省略列
+pd.set_option('display.width', None)         # 显示不换行
 
 
 class WipTable(QWidget):
@@ -36,73 +41,70 @@ class WipTable(QWidget):
         layout.addWidget(self.TableWidget)
         self.setLayout(layout)
 
+    def iniLocal(self):
+        """将MainLayout3中的查询讯息初始化"""
+        self.productFam = ''
+        self.productId = ''
+        self.productVer = ''
+
     def getQue1Msg(self, value):
+        """从MainLayout2获取Product Family Name信息"""
         self.productFam = value
 
     def getQue2Msg(self, value):
+        """从MainLayout2获取Product ID, Ver信息"""
         try:
             self.productId, self.productVer = value.split(',')
         except ValueError:
-            self.productId = ''
-            self.productVer = ''
+            if value:
+                self.productId = value
+            else:
+                self.productId = ''
+                self.productVer = ''
 
     def getFunMsg(self, value):
-        if value == 'Daily WIP Check':
-            if self.productFam != '':
-                if self.productId != '':
-                    if self.productVer != '':
-                        ProductId = ProductIdQuery1(self.productFam, self.productId, self.productVer)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-                    else:
-                        ProductId = ProductIdQuery2(self.productFam, self.productId)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-                else:
-                    if self.productVer != '':
-                        ProductId = ProductIdQuery3(self.productFam, self.productVer)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-                    else:
-                        ProductId = ProductIdQuery4(self.productFam)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-            else:
-                if self.productId != '':
-                    if self.productVer != '':
-                        ProductId = ProductIdQuery5(self.productId, self.productVer)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-                    else:
-                        ProductId = ProductIdQuery6(self.productId)
-                        df = pd.DataFrame()
-                        for i in ProductId:
-                            df = df.append((ProductLotQuery(''.join(i))))
-                        self.model = PandasModel(df)
-                        self.TableWidget.setModel(self.model)
-                else:
-                    print('please input Product ID')
+        """从MainLayout2获取操作命令，并进行判断，将相应的数据传给TableWeiget"""
+        tbname = 'psmc_product_version'
+        item = ['PowerChip_Product_ID']
+        productinfo = dict()
+        productid = dict()
+        df = pd.DataFrame()
+        productinfo['Nick_Name'] = self.productFam
+        productinfo['UniIC_Product_ID'] = self.productId
+        productinfo['UniIC_Product_Version'] = self.productVer
+        columns = list(productinfo.keys())
+        for key in columns:
+            if productinfo[key] == '':
+                del productinfo[key]
+        if value == 'Product Lot Check':
+            """提供所有的Lot信息(包含已经在WH的产品)"""
+            mysql = MySQL()
+            mysql.selectDb('configdb')  # 连接数据库
+            des, sql_result = mysql.fetchAll(tbname=tbname, items=item, condition=productinfo)
+            mysql.cur.close()
+            productid[''.join(des)] = sql_result    # 生成PowerChip_Product_Version List
+            for i in productid[''.join(des)]:
+                mysql = MySQL()
+                mysql.selectDb('testdb')  # 连接数据库
+                des, sql_result = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition={'Current_Chip_Name': ''.join(i)})
+                mysql.cur.close()
+                df = df.append(pd.DataFrame(sql_result, columns=des), ignore_index=True)
+            if not df.empty:
+                df.sort_values(by='Forecast_Date', ascending=False, inplace=True)
+                df = df.astype(str)
+                for index, row in df.iterrows():    # 如果Qty 为0, 则将数据删除
+                    if row['Qty'] == '0':
+                        df.drop(index, inplace=True)
+                df.replace(['nan', 'None'], '', inplace=True)
+                df.replace('1.0', 'Y', inplace=True)
+                self.model = PandasModel(df)
+                self.TableWidget.setModel(self.model)
 
-        # if value == 'Product Lot Check':
+        # todo if value == 'Product Lot Check':
         #     pass
-        # if value == 'Product Shipping Check':
+        # todo if value == 'Product Shipping Check':
         #     pass
-        # if value == 'Product Q-Time Check':
+        # todo if value == 'Product Q-Time Check':
         #     pass
 
 
@@ -131,164 +133,18 @@ class PandasModel(QAbstractTableModel):
         return None
 
 
-# ---------------返回查询的数据--------------------
-def ProductLotQuery(queryItem):
-
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'database': 'testdb',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT DATE_FORMAT(`Wafer_Start_Date`,'%Y/%m/%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Comment, Fab, Layer, Stage, 
-        DATE_FORMAT(`Current_Time`,'%Y/%m/%d %H:%i') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%Y/%m/%d') AS `Forecast_Date`, Qty, 
-        `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
-        FROM psmc_lot_tracing_table
-        WHERE Current_Chip_Name = '{}'
-        ORDER BY `Current_Time` DESC
-        """ .format(queryItem)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        columnDes = cursor.description
-        connection.close()
-        columnNames = [columnDes[i][0] for i in range(len(columnDes))]  # 获取表头
-    df = pd.DataFrame([pd.Series(i, index=columnNames).astype(str) for i in sql_results], columns=columnNames)  # 将从数据库中取出的元祖数据转换为dataframe
-    for index, row in df.iterrows():    # 如果Qty 为0, 则将数据删除
-        if row['Qty'] == '0':
-            df.drop(index, inplace=True)
-    return df
-
-
-def ProductIdQuery1(productFam, productId, productVer):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE Nick_Name = '{}' AND UniIC_Product_ID = '{}' AND UniIC_Product_Version = '{}'
-        """ .format(productFam, productId, productVer)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
-def ProductIdQuery2(productFam, productId):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE Nick_Name = '{}' AND UniIC_Product_ID = '{}'
-        """ .format(productFam, productId)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
-def ProductIdQuery3(productFam, productVer):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE Nick_Name = '{}' AND UniIC_Product_Version = '{}'
-        """ .format(productFam, productVer)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
-def ProductIdQuery4(productFam):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE Nick_Name = '{}'
-        """ .format(productFam)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
-def ProductIdQuery5(productId, productVer):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE UniIC_Product_ID = '{}' AND UniIC_Product_Version = '{}'
-        """ .format(productId, productVer)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
-def ProductIdQuery6(productId):
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'charset': 'utf8'
-    }
-    sql = """
-        SELECT PowerChip_Product_ID FROM psmc_product_version WHERE UniIC_Product_ID = '{}'
-        """ .format(productId)
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE configdb;')
-        cursor.execute(sql)
-        sql_results = cursor.fetchall()
-        connection.close()
-    sql_results = [list(i) for i in sql_results]
-    return sql_results
-
-
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    product = 'AAPS70D1D-0E01'
-    main = WipTable(product)
-    main.show()
-    sys.exit(app.exec_())
+    # app = QApplication(sys.argv)
+    # main = WipTable()
+    # main.productFam = 'Giulia'
+    # main.productId = ''
+    # main.productVer = ''
+    # main.getFunMsg('Daily WIP Check')
+    # main.show()
+    # sys.exit(app.exec_())
+    # main = WipTable()
+    database = 'testdb'
+    Current_Chip_Name = 'AAPS70D1D-0A01'
+    ProductLotQuery(database=database, condition=Current_Chip_Name)   # Current_Chip_Name
 
 
