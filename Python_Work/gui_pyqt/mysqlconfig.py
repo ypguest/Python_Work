@@ -176,16 +176,16 @@ class MySQL(object):
 
 if __name__ == '__main__':
     """用法示例：选取，插入，更新，删除"""
-    mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
-    mysql.selectDb('configdb')  # 连接数据库
+    # mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
+    # mysql.selectDb('configdb')  # 连接数据库
 
-    """具体操作定义：选取单行或多行"""
-    table = 'psmc_product_version'
-    item = ['PowerChip_Product_ID']
-    condition = {'Nick_Name': 'Hanlu'}
-    data = mysql.fetchAll(tbname=table, items=item, condition=condition)
-    mysql.cur.close()
-    print(data)
+    # """具体操作定义：选取单行或多行"""
+    # table = 'psmc_product_version'
+    # item = ['PowerChip_Product_ID']
+    # condition = {'Nick_Name': 'Hanlu'}
+    # data = mysql.fetchAll(tbname=table, items=item, condition=condition)
+    # mysql.cur.close()
+    # print(data)
 
     """具体操作定义：插入单行或多行"""
     # table = 'psmc_lot_tracing_table'

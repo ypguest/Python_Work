@@ -73,10 +73,12 @@ class MainWidget(QWidget):
         # ------------模块间的通讯--------------------------
         self.ProdQuery1.sendToProQuery.connect(self.ProdQuery2.getMsg)   # 将ProdNickQuery()中选取的Nick Name与ProdQuery()进行绑定
 
-        self.ProdQuery3.sendmsg.connect(self.ProdQuery1.sendMsg)      # 功能按钮被单击，触发sendMeg函数
-        self.ProdQuery3.sendmsg.connect(self.ProdQuery2.sendMsg)
+        self.ProdQuery3.sendmsg.connect(self.tableWidget.iniLocal)    # 单击后将MainLayout3内部参数初始化
 
-        self.ProdQuery1.sendmsg.connect(self.tableWidget.getQue1Msg)
+        self.ProdQuery3.sendmsg.connect(self.ProdQuery1.sendMsg)      # 功能按钮被单击，触发sendMeg函数
+        self.ProdQuery3.sendmsg.connect(self.ProdQuery2.sendMsg)      # 功能按钮被单击，触发sendMeg函数
+
+        self.ProdQuery1.sendmsg.connect(self.tableWidget.getQue1Msg)   # 功能按钮单击，接收信息
         self.ProdQuery2.sendmsg.connect(self.tableWidget.getQue2Msg)
         self.ProdQuery3.sendmsg.connect(self.tableWidget.getFunMsg)   # 功能按钮被单击，触发功能按钮的信息给tableWidget
 

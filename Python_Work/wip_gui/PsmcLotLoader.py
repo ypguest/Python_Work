@@ -25,9 +25,9 @@ pd.set_option('display.width', None)         # 显示不换行
 
 # ---------------------------------主程序 ----------------------------------
 def PsmcLotLoader():
+    """遍历excel数据，将Lot_ID不同的产品上传至数据库"""
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/configdb?charset=utf8')
-
     file_path = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
     rename = {'Wafer Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Current Chip Name': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
@@ -119,7 +119,6 @@ def RepeatWaferCheck():
         for row in data.iterrows():
             Item = row[1].where(row[1].notnull(), 'Null')  # 将nan 转变为Null
             dictdata = Item.to_dict()
-            print(dictdata)
             MysqlUpdate(dictdata)
 
 

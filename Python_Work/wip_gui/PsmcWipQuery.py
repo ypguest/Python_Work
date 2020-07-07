@@ -29,7 +29,7 @@ class AutoProcessData(object):
             cursor.execute("SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, "
                            "`#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_report WHERE")
 
-            cursor.execute("SELECT Wafer_Start_Date, Lot_ID, MLot_ID, Qty, `Current_Time` FROM psmc_wip_report WHERE Layer = '1F' ORDER BY `Current_time` ASC;")
+            cursor.execute("SELECT Wafer_Start_Date, Lot_ID, MLot_ID, Qty, `Current_Time` FROM psmc_wip_tracing_table WHERE Layer = '1F' ORDER BY `Current_time` ASC;")
             sql_results = cursor.fetchall()
             columnDes = cursor.description
             self.connection.close()
@@ -58,8 +58,9 @@ def LotAtWH():
     connection = pymysql.connect(**sql_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
-        cursor.execute("SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, "
-                       "`#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_report WHERE TO_DAYS(`Current_Time`) = TO_DAYS(`Forecast_Date`) ORDER BY `Current_time` ASC;")
+        cursor.execute("""SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, 
+        `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_tracing_table WHERE TO_DAYS(`Current_Time`) = TO_DAYS(`Forecast_Date`) ORDER BY `Current_time` ASC;
+        """)
         sql_results = cursor.fetchall()
         columnDes = cursor.description
         connection.close()

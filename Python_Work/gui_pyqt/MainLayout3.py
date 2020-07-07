@@ -64,44 +64,101 @@ class WipTable(QWidget):
 
     def getFunMsg(self, value):
         """从MainLayout2获取操作命令，并进行判断，将相应的数据传给TableWeiget"""
+        productinfo = dict()
+        psmc_productid = dict()
+        lot_df = pd.DataFrame()
         tbname = 'psmc_product_version'
         item = ['PowerChip_Product_ID']
-        productinfo = dict()
-        productid = dict()
-        df = pd.DataFrame()
+
+        # 获取参数
         productinfo['Nick_Name'] = self.productFam
         productinfo['UniIC_Product_ID'] = self.productId
         productinfo['UniIC_Product_Version'] = self.productVer
-        columns = list(productinfo.keys())
-        for key in columns:
+
+        columns = list(productinfo.keys())  # 获取参数名['Nick_Name','UniIC_Product_ID','UniIC_Product_Version']
+        for key in columns:                 # 如果参数为空，则去掉该参数
             if productinfo[key] == '':
                 del productinfo[key]
+        mysql = MySQL()
+        mysql.selectDb('configdb')  # 连接数据库
+        psmc_des, psmc_sql_res = mysql.fetchAll(tbname=tbname, items=item, condition=productinfo)
+        mysql.cur.close()
+        del productinfo    # 释放资源
+        psmc_productid[''.join(psmc_des)] = psmc_sql_res       # 基于输入结果，生成PowerChip_Product_Version List字典
         if value == 'Product Lot Check':
             """提供所有的Lot信息(包含已经在WH的产品)"""
-            mysql = MySQL()
-            mysql.selectDb('configdb')  # 连接数据库
-            des, sql_result = mysql.fetchAll(tbname=tbname, items=item, condition=productinfo)
-            mysql.cur.close()
-            productid[''.join(des)] = sql_result    # 生成PowerChip_Product_Version List
-            for i in productid[''.join(des)]:
+            for i in psmc_productid[''.join(psmc_des)]:   # 遍历psmc_product_id
                 mysql = MySQL()
                 mysql.selectDb('testdb')  # 连接数据库
-                des, sql_result = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition={'Current_Chip_Name': ''.join(i)})
+                lotche_des, lotche_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition={'Current_Chip_Name': ''.join(i)})  # 获取lot,
                 mysql.cur.close()
-                df = df.append(pd.DataFrame(sql_result, columns=des), ignore_index=True)
-            if not df.empty:
-                df.sort_values(by='Forecast_Date', ascending=False, inplace=True)
-                df = df.astype(str)
-                for index, row in df.iterrows():    # 如果Qty 为0, 则将数据删除
+                lot_df = lot_df.append(pd.DataFrame(lotche_sql_res, columns=lotche_des), ignore_index=True)
+            if not lot_df.empty:    # 对获取query的结果按照Forecast_Date排序
+                lot_df.sort_values(by='Forecast_Date', ascending=False, inplace=True)
+                lot_df = lot_df.astype(str)
+                for index, row in lot_df.iterrows():    # 如果Qty 为0, 则将数据删除
                     if row['Qty'] == '0':
-                        df.drop(index, inplace=True)
-                df.replace(['nan', 'None'], '', inplace=True)
-                df.replace('1.0', 'Y', inplace=True)
-                self.model = PandasModel(df)
-                self.TableWidget.setModel(self.model)
+                        lot_df.drop(index, inplace=True)
+                lot_df.replace(['nan', 'None'], '', inplace=True)
+                lot_df.replace('1.0', 'Y', inplace=True)
+            else:
+                pass
+            # 释放资源
+            del lotche_des, lotche_sql_res, mysql, psmc_productid
+            self.model = PandasModel(lot_df)
+            self.TableWidget.setModel(self.model)
 
-        # todo if value == 'Product Lot Check':
-        #     pass
+        if value == 'Daily WIP Check':
+            set_time = dict()
+            time_df = pd.DataFrame()
+            mysql = MySQL()
+            mysql.selectDb('testdb')  # 连接数据库
+            time_des, time_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items=['Current_Time'])
+            time_df = time_df.append(pd.DataFrame(time_sql_res, columns=time_des), ignore_index=True)  # 生成current_time的datafr
+            time_df.sort_values(by='Current_Time', ascending=False, inplace=True)
+            mysql.cur.close()
+            set_time['Current_Time'] = time_df.iat[0, 0]
+            del time_df   # 释放time_df资源
+            for i in psmc_productid[''.join(psmc_des)]:
+                set_time['Current_Chip_Name'] = ''.join(i)  # 将Current_Chip_Name加入setting time字典，用于sql的筛选条件
+                mysql = MySQL()
+                mysql.selectDb('testdb')  # 连接数据库
+                lotche_des, lotche_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition=set_time)
+                mysql.cur.close()
+                lot_df = lot_df.append(pd.DataFrame(lotche_sql_res, columns=lotche_des), ignore_index=True)
+
+            if not lot_df.empty:
+                lot_df.sort_values(by='Forecast_Date', ascending=False, inplace=True)     # 按时间排序
+                lot_df = lot_df.astype(str)                                                   # 转换为字符
+                for index, row in lot_df.iterrows():  # 如果Qty 为0, 则将数据删除
+                    if row['Qty'] == '0':
+                        lot_df.drop(index, inplace=True)
+                lot_df.replace(['nan', 'None'], '', inplace=True)
+                lot_df.replace('1.0', 'Y', inplace=True)
+            else:
+                pass
+            # 释放资源
+            del set_time, lotche_des, lotche_sql_res, mysql, psmc_productid
+            self.model = PandasModel(lot_df)
+            self.TableWidget.setModel(self.model)
+
+        if value == 'Product Q-Time Check':
+            mysql = MySQL()
+            mysql.selectDb('testdb')  # 连接数据库
+            sql = """SELECT psmc_lot_tracing_table.*, MAX(psmc_wip_tracing_table.Current_Time)
+            FROM psmc_lot_tracing_table, psmc_wip_tracing_table
+            WHERE psmc_lot_tracing_table.Lot_ID = psmc_wip_tracing_table.Lot_ID
+            GROUP BY psmc_lot_tracing_table.Lot_ID
+            HAVING psmc_lot_tracing_table.`Current_Time`< MAX(psmc_wip_tracing_table.Current_Time) 
+            """
+            time_des, time_sql_res = mysql.sqlAll(sql)
+
+
+
+
+
+
+
         # todo if value == 'Product Shipping Check':
         #     pass
         # todo if value == 'Product Q-Time Check':

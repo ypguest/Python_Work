@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 
 
 def GenLotWafer():
-    # todo 从psmc_wip_report数据中获取当前时间=出货时间的lot信息，并返回元祖
+    # todo 从psmc_wip_traceing_table数据中获取当前时间=出货时间的lot信息，并返回元祖
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
@@ -23,8 +23,9 @@ def GenLotWafer():
     connection = pymysql.connect(**sql_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
-        cursor.execute("SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, "
-                       "`#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_report WHERE TO_DAYS(`Current_Time`) = TO_DAYS(`Forecast_Date`) ORDER BY `Current_time` ASC;")
+        cursor.execute("""SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, 
+        `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` FROM psmc_wip_traceing_table WHERE TO_DAYS(`Current_Time`) = TO_DAYS(`Forecast_Date`) ORDER BY `Current_time` ASC;
+        """)
         sql_results = cursor.fetchall()
         columnDes = cursor.description
         connection.close()
