@@ -15,25 +15,23 @@ import numpy as np
 import pymysql
 import xlrd
 from sqlalchemy import create_engine
-
-# pd设置
-
+import time
+# ---------------------------pd设置-----------------------------------
+# --------------------------------------------------------------------
 pd.set_option('display.max_columns', None)   # 显示不省略行
 pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
+pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
 
 
-# ---------------------------------主程序 ----------------------------------
-def PsmcLotLoader():
-    """遍历excel数据，将Lot_ID不同的产品上传至数据库"""
-    pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
+# ---------------------------------主程序----------------------------------
+def PsmcLotLoader(data_paths):
     myconnect = create_engine('mysql+mysqldb://root:yp*963.@localhost:3306/configdb?charset=utf8')
-    file_path = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
+    """遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库"""
     rename = {'Wafer Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Current Chip Name': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
     # ------------遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径-----------------
-    data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
     for data_path in data_paths:
         # --------通过读取excel获取Current_Time(使用Try是有些文件打不开)-----------------------------------
         try:
@@ -64,20 +62,66 @@ def PsmcLotLoader():
             wafer_no = DataToWafer(row['Wafer_No'])
             ser_total = pd.DataFrame(pd.concat([row[:-1], wafer_no])).T
             # noinspection PyBroadException
-            try:
+            try:     # 将Wafer信息更新至数据库
                 pd.io.sql.to_sql(ser_total, 'psmc_lot_tracing_table', con=myconnect, schema='testdb', if_exists='append', index=False)
-            except Exception:
+            except Exception:      # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
                 RepeatLotCheck(ser_total)
     # -----------------处理重复Wafer的问题---------------------------------
     RepeatWaferCheck()
 
 
-def RepeatWaferCheck():
+def RepeatLotCheck(Item):
+    """如果录入的Lot_Id.dataframe()与数据库中已经存在的Lot_Id，则将数据库中的该Lot信息调出，通过判断这个Lot的Current_Time确认是否需要更新"""
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
         'host': 'localhost',
-        'database': 'testdb',
+        'charset': 'utf8'
+    }
+    connection = pymysql.connect(**sql_config)
+    with connection.cursor() as cursor:
+        cursor.execute('USE testdb;')
+        cursor.execute("""
+        SELECT DATE_FORMAT(`Wafer_Start_Date`,'%%Y/%%m/%%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Current_Chip_Name, Fab, Layer, Stage, 
+        DATE_FORMAT(`Current_Time`,'%%Y/%%m/%%d %%H:%%i') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%%Y/%%m/%%d') AS `Forecast_Date`, Qty
+        `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
+        FROM psmc_lot_tracing_table WHERE Lot_ID = '%s'
+        """ % Item['Lot_ID'].item())
+        sql_results = cursor.fetchall()
+        columnDes = cursor.description
+        connection.close()
+    columnNames = [columnDes[i][0] for i in range(len(columnDes))]
+    df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)   # 将这个Lot的信息从psmc_lot_tracing_table中调出来
+    # 如果数据库中的时间比excel中读取的current时间小，则更新数据，否则Pass
+    ItCurrent_Time = datetime.datetime.strptime(Item['Current_Time'].item(), '%Y/%m/%d %H:%M')         # 当前需要判断的Lot的Current_Time
+    dfCurrent_Time = datetime.datetime.strptime(df['Current_Time'].item(), '%Y/%m/%d %H:%M')   # 数据库中的Current_Time
+    dfCurrent_Date = datetime.datetime.strptime(df['Current_Time'].item().split(" ")[0], '%Y/%m/%d')
+    dfForecast_Date = datetime.datetime.strptime(df['Forecast_Date'].item(), '%Y/%m/%d')     # 数据库中的Forecast_Date
+
+    if dfCurrent_Time < dfForecast_Date and ItCurrent_Time > dfCurrent_Time:
+        """库中的时间小于库中froecast时间，说明还未到达WH; 且库中的当前时间比需要更新的时间小，说明当前站点比库中站点靠后"""
+        Item = Item.where(Item.notnull(), 'Null')  # 将刻号没有的 #01, #02中的nan 转变为Null
+        dictdata = Item.to_dict(orient='record')[0]  # 将dataframe数据转换为字典
+        MysqlUpdate(dictdata)
+
+    elif dfCurrent_Time == dfForecast_Date and ItCurrent_Time < dfCurrent_Time:
+        """库中的时间与库中forecast时间相等，且当前时间比库中时间小，说明当前时间Lot已经到达WH"""
+        Item = Item.where(Item.notnull(), 'Null')  # 将刻号没有的 #01, #02中的nan 转变为Null
+        dictdata = Item.to_dict(orient='record')[0]  # 将dataframe数据转换为字典
+        MysqlUpdate(dictdata)
+
+    else:
+        """dfCurrent_Time < dfForecast_Date, ItCurrent_Time < dfCurrent_Time 说明当前Lot为非WH的之前的Lot，故不需要更新"""
+        """dfCurrent_Time == dfForecast_Date, ItCurrent_Time > dfCurrent_Time 说明库中Lot已经到达WH，无需更新"""
+        pass
+
+
+def RepeatWaferCheck():
+    """将Lot按子批拉出来，将前面分批的Wafer的ID从后面有的Wafer中减去"""
+    sql_config = {
+        'user': 'root',
+        'password': 'yp*963.',
+        'host': 'localhost',
         'charset': 'utf8'
     }
     connection = pymysql.connect(**sql_config)
@@ -122,64 +166,31 @@ def RepeatWaferCheck():
             MysqlUpdate(dictdata)
 
 
-# --------------------------如果录入的Lot Id与数据库中已经存在的Lot Id，则需确认是否需要更新
-def RepeatLotCheck(Item):
+# -------------------------------------更新数据库中Lot的最新信息-----------------------------------------
+def MysqlUpdate(dictdata):
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
         'host': 'localhost',
-        'database': 'testdb',
         'charset': 'utf8'
     }
-    connection = pymysql.connect(**sql_config)
-    with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
-        cursor.execute("""
-        SELECT DATE_FORMAT(`Wafer_Start_Date`,'%%Y/%%m/%%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Current_Chip_Name, Fab, Layer, Stage, 
-        DATE_FORMAT(`Current_Time`,'%%Y/%%m/%%d %%H:%%i') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%%Y/%%m/%%d') AS `Forecast_Date`, Qty
-        `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
-        FROM psmc_lot_tracing_table WHERE Lot_ID = '%s'
-        """ % Item['Lot_ID'].item())
-        sql_results = cursor.fetchall()
-        columnDes = cursor.description
-        connection.close()
-    columnNames = [columnDes[i][0] for i in range(len(columnDes))]
-    df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)
-    # 如果数据库中的时间比excel中读取的current时间小，则更新数据，否则Pass
-    dfCurrent_Time = datetime.datetime.strptime(df['Current_Time'].item().split(' ')[0], '%Y/%m/%d')
-    Forecast_Date = datetime.datetime.strptime(df['Forecast_Date'].item(), '%Y/%m/%d')
-    ItCurrent_Time = datetime.datetime.strptime(Item['Current_Time'].item(), '%Y/%m/%d %H:%M')
-    if dfCurrent_Time < ItCurrent_Time and dfCurrent_Time != Forecast_Date:
-        Item = Item.where(Item.notnull(), 'Null')  # 将nan 转变为Null
-        dictdata = Item.to_dict(orient='record')[0]
-        MysqlUpdate(dictdata)
-    else:
-        pass
-
-
-# -------------------------------------更新数据库中Lot的最新信息-----------------------------------------
-def MysqlUpdate(dictdata):
     Lot_ID = dictdata['Lot_ID']
     dictstr = dictdata.copy()
     dictfloat = dictdata.copy()
     del dictstr['Wafer_Start_Date'], dictstr['MLot_ID'], dictstr['Lot_ID'], dictstr['Qty'], dictstr['#01'], dictstr['#02'], dictstr['#03'], dictstr['#04'], dictstr['#05'], \
         dictstr['#06'], dictstr['#07'], dictstr['#08'], dictstr['#09'], dictstr['#10'], dictstr['#11'], dictstr['#12'], dictstr['#13'], dictstr['#14'], dictstr['#15'], dictstr['#16'], \
         dictstr['#17'], dictstr['#18'], dictstr['#19'], dictstr['#20'], dictstr['#21'], dictstr['#22'], dictstr['#23'], dictstr['#24'], dictstr['#25']
-    del dictfloat['Wafer_Start_Date'], dictfloat['MLot_ID'], dictfloat['Lot_ID'], dictfloat['Current_Chip_Name'], dictfloat['Fab'],dictfloat['Layer'], dictfloat['Stage'],dictfloat['Current_Time'], \
+    del dictfloat['Wafer_Start_Date'], dictfloat['MLot_ID'], dictfloat['Lot_ID'], dictfloat['Current_Chip_Name'], dictfloat['Fab'], dictfloat['Layer'], dictfloat['Stage'], dictfloat['Current_Time'], \
         dictfloat['Forecast_Date']
     sql = "UPDATE psmc_lot_tracing_table SET {}, {} WHERE Lot_ID = '{}'".format((','.join("`{}` = '{}'".format(k, v) for k, v in dictstr.items())),
                                                                                 (','.join("`{}` = {}".format(k, v) for k, v in dictfloat.items())), Lot_ID)
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'database': 'testdb',
-        'charset': 'utf8'
-    }
     connection = pymysql.connect(**sql_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
-        cursor.execute(sql)
+        try:  # 将Wafer信息更新至数据库
+            cursor.execute(sql)
+        except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
+            print(sql)
         connection.commit()
         cursor.close()
         connection.close()
@@ -235,6 +246,11 @@ def FileRepeatChk(file_path):
 
 
 if __name__ == "__main__":
-    PsmcLotLoader()
+    # data_paths = ['\\\\arctis\\qcxpub\\QRE\\04_QA(Component)\\99_Daily_Report\\01_PTC_Wip\\SINOCHIP_2018021014.xls']
+    # starttime = time.time()
+    # PsmcLotLoader(data_paths)
+    # endtime = time.time()
+    # duration = endtime - starttime
+    # print(duration)
     RepeatWaferCheck()
 

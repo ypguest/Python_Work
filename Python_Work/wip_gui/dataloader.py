@@ -2,13 +2,8 @@
 # -*- coding: utf-8 -*-
 import os
 import pymysql
-import xlrd
-import datetime
-import pandas as pd
-import numpy as np
-
-from sqlalchemy import create_engine
 from Python_Work.wip_gui.PsmcWipLoader import psmcWipLoader
+from Python_Work.wip_gui.PsmcLotLoader import PsmcLotLoader
 
 
 def DirFolder(_file_path):
@@ -32,7 +27,7 @@ def FileRepeatChk(_file_path):
     connection = pymysql.connect(**sql_config)
     try:
         with connection.cursor() as cursor:
-            cursor.execute('USE testdb;')
+            cursor.execute('USE configdb;')
             cursor.execute('SELECT filename FROM wiploader')
             result = cursor.fetchall()
     finally:
@@ -51,9 +46,12 @@ def FileRepeatChk(_file_path):
 
 
 if __name__ == "__main__":
-    file_path = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
+    file_path = r'F:\08 Daily_Report\01_PTC_Wip'
     data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
+    PsmcLotLoader(data_paths)
     psmcWipLoader(data_paths)
+
+
 
 
 
