@@ -71,6 +71,12 @@ class WipTable(QWidget):
         """从MainLayout2获取Product Family Name信息"""
         self.productFam = value
 
+    def iniLocal(self):
+        self.productFam = ''
+        self.productId = ''
+        self.productVer = ''
+        self.model = ''
+
     def getQue2Msg(self, value):
         """从MainLayout2获取Product ID, Ver信息"""
         try:
