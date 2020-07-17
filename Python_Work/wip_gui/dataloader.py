@@ -16,7 +16,7 @@ def DirFolder(_file_path):
 
 
 def FileRepeatChk(_file_path):
-    # todo 判断每天需要upload的文件
+    """判断每天需要upload的文件"""
     sql_config = {
         'user': 'root',
         'password': 'yp*963.',
@@ -28,7 +28,7 @@ def FileRepeatChk(_file_path):
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
-            cursor.execute('SELECT filename FROM wiploader')
+            cursor.execute('SELECT filename FROM psmcwiploader')
             result = cursor.fetchall()
     finally:
         connection.close()
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     file_path = r'F:\08 Daily_Report\01_PTC_Wip'
     data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
     PsmcLotLoader(data_paths)
-    psmcWipLoader(data_paths)
+    # psmcWipLoader(data_paths)
 
 
 

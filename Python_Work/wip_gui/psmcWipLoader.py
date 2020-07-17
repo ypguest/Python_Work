@@ -51,7 +51,7 @@ def FileRepeatChk(_file_path):
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE testdb;')
-            cursor.execute('SELECT filename FROM wiploader')
+            cursor.execute('SELECT filename FROM psmcwiploader')
             result = cursor.fetchall()
     finally:
         connection.close()
@@ -76,7 +76,6 @@ def psmcWipLoader(data_paths):
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
     for data_path in data_paths:    # 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径
-        print("#02", data_path)
         try:         # 通过读取excel获取Current_Time， 有些文件打不开
             workbook = xlrd.open_workbook(data_path, 'rb')
         except AttributeError:
@@ -99,7 +98,7 @@ def psmcWipLoader(data_paths):
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         # noinspection PyBroadException
         try:
-            pd.io.sql.to_sql(loader_record, 'wiploader', con=myconnect, schema='configdb', if_exists='append', index=False)
+            pd.io.sql.to_sql(loader_record, 'psmcwiploader', con=myconnect, schema='configdb', if_exists='append', index=False)
         except Exception:
             continue
         # todo 上传wip数据

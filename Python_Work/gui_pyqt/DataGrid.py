@@ -25,7 +25,7 @@ class DataGrid(QWidget):
         self.totalRecordCoutn = 0
 
         # 每页显示记录数
-        self.PageRecordCount = 50
+        self.pageRecordCount = 100
 
         # 当前页信息
         self.switchPage = QLabel("当前%s/%s页" % (self.currentPage, self.totalPage))

@@ -15,7 +15,6 @@ import numpy as np
 import pymysql
 import xlrd
 from sqlalchemy import create_engine
-import time
 # ---------------------------pd设置-----------------------------------
 # --------------------------------------------------------------------
 pd.set_option('display.max_columns', None)   # 显示不省略行
@@ -52,10 +51,10 @@ def PsmcLotLoader(data_paths):
         datas.rename(columns=rename, inplace=True)
         datas['Current_Time'] = Current_Time
         datas = datas[order]
-        # -------------------将已经上传的文件名更新至wiploader数据库----------------
+        # -------------------将已经上传的文件名更新至psmcwiploader数据库----------------
         _, filename = os.path.split(data_path)
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
-        pd.io.sql.to_sql(loader_record, 'wiploader', con=myconnect, schema='configdb', if_exists='append', index=False)
+        pd.io.sql.to_sql(loader_record, 'psmcwiploader', con=myconnect, schema='configdb', if_exists='append', index=False)
 
         # ------------------上传数据至------------------------------------------
         for index, row in datas.iterrows():
@@ -83,7 +82,7 @@ def RepeatLotCheck(Item):
         cursor.execute('USE testdb;')
         cursor.execute("""
         SELECT DATE_FORMAT(`Wafer_Start_Date`,'%%Y/%%m/%%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Current_Chip_Name, Fab, Layer, Stage, 
-        DATE_FORMAT(`Current_Time`,'%%Y/%%m/%%d %%H:%%i') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%%Y/%%m/%%d') AS `Forecast_Date`, Qty
+        DATE_FORMAT(`Current_Time`,'%%Y/%%m/%%d %%H:%%i:%%s') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%%Y/%%m/%%d') AS `Forecast_Date`, Qty
         `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
         FROM psmc_lot_tracing_table WHERE Lot_ID = '%s'
         """ % Item['Lot_ID'].item())
@@ -93,27 +92,25 @@ def RepeatLotCheck(Item):
     columnNames = [columnDes[i][0] for i in range(len(columnDes))]
     df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)   # 将这个Lot的信息从psmc_lot_tracing_table中调出来
     # 如果数据库中的时间比excel中读取的current时间小，则更新数据，否则Pass
-    ItCurrent_Time = datetime.datetime.strptime(Item['Current_Time'].item(), '%Y/%m/%d %H:%M')         # 当前需要判断的Lot的Current_Time
-    dfCurrent_Time = datetime.datetime.strptime(df['Current_Time'].item(), '%Y/%m/%d %H:%M')   # 数据库中的Current_Time
-    dfCurrent_Date = datetime.datetime.strptime(df['Current_Time'].item().split(" ")[0], '%Y/%m/%d')
+    ItCurrent_Time = datetime.datetime.strptime(Item['Current_Time'].item(), '%Y/%m/%d %H:%M')         # 当前需要判断的Lot的Current_Time，当前时间没有%S
+    ItCurrent_Date = datetime.datetime.strptime(Item['Current_Time'].item().split(" ")[0], '%Y/%m/%d')   # current time有含有时间信息，需要转换为日期信息
+    ItForecast_Date = datetime.datetime.strptime(Item['Forecast_Date'].item(), '%Y/%m/%d')     # 当前Lot的Forecast_Date
+
+    dfCurrent_Time = datetime.datetime.strptime(df['Current_Time'].item(), '%Y/%m/%d %H:%M:%S')   # 数据库中的Current_Time
+    dfCurrent_Date = datetime.datetime.strptime(df['Current_Time'].item().split(" ")[0], '%Y/%m/%d')   # current time有含有时间信息，需要转换为日期信息
     dfForecast_Date = datetime.datetime.strptime(df['Forecast_Date'].item(), '%Y/%m/%d')     # 数据库中的Forecast_Date
 
-    if dfCurrent_Time < dfForecast_Date and ItCurrent_Time > dfCurrent_Time:
-        """库中的时间小于库中froecast时间，说明还未到达WH; 且库中的当前时间比需要更新的时间小，说明当前站点比库中站点靠后"""
+    if (ItCurrent_Time > dfCurrent_Time) and (dfCurrent_Date != dfForecast_Date):
+        """库中的当前时间比当前Lot的时间小，说明当前Lot比库中站点更靠后；库中的时间小于库中froecast时间，说明还未到达WH; """
         Item = Item.where(Item.notnull(), 'Null')  # 将刻号没有的 #01, #02中的nan 转变为Null
         dictdata = Item.to_dict(orient='record')[0]  # 将dataframe数据转换为字典
         MysqlUpdate(dictdata)
 
-    elif dfCurrent_Time == dfForecast_Date and ItCurrent_Time < dfCurrent_Time:
-        """库中的时间与库中forecast时间相等，且当前时间比库中时间小，说明当前时间Lot已经到达WH"""
+    if (ItCurrent_Time < dfCurrent_Time) and (ItCurrent_Date == ItForecast_Date):
+        """当前时间比库中时间小，且当前时间与当前Forecast_Date时间相等则说明当前Lot已经到达WH"""
         Item = Item.where(Item.notnull(), 'Null')  # 将刻号没有的 #01, #02中的nan 转变为Null
         dictdata = Item.to_dict(orient='record')[0]  # 将dataframe数据转换为字典
         MysqlUpdate(dictdata)
-
-    else:
-        """dfCurrent_Time < dfForecast_Date, ItCurrent_Time < dfCurrent_Time 说明当前Lot为非WH的之前的Lot，故不需要更新"""
-        """dfCurrent_Time == dfForecast_Date, ItCurrent_Time > dfCurrent_Time 说明库中Lot已经到达WH，无需更新"""
-        pass
 
 
 def RepeatWaferCheck():
@@ -129,7 +126,7 @@ def RepeatWaferCheck():
         cursor.execute('USE testdb;')
         cursor.execute("""
         SELECT DATE_FORMAT(`Wafer_Start_Date`,'%Y/%m/%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Current_Chip_Name, Fab, Layer, Stage, 
-        DATE_FORMAT(`Current_Time`,'%Y/%m/%d %H:%i') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%Y/%m/%d') AS `Forecast_Date`, Qty, 
+        DATE_FORMAT(`Current_Time`,'%Y/%m/%d %H:%i:%s') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%Y/%m/%d') AS `Forecast_Date`, Qty, 
         `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
         FROM psmc_lot_tracing_table
         """)
@@ -228,7 +225,7 @@ def FileRepeatChk(file_path):
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
-            cursor.execute('SELECT filename FROM wiploader')
+            cursor.execute('SELECT filename FROM psmcwiploader')
             result = cursor.fetchall()
     finally:
         connection.close()
@@ -246,11 +243,6 @@ def FileRepeatChk(file_path):
 
 
 if __name__ == "__main__":
-    # data_paths = ['\\\\arctis\\qcxpub\\QRE\\04_QA(Component)\\99_Daily_Report\\01_PTC_Wip\\SINOCHIP_2018021014.xls']
-    # starttime = time.time()
-    # PsmcLotLoader(data_paths)
-    # endtime = time.time()
-    # duration = endtime - starttime
-    # print(duration)
-    RepeatWaferCheck()
+    data_paths = ['\\\\arctis\\qcxpub\\QRE\\04_QA(Component)\\99_Daily_Report\\01_PTC_Wip\\SINOCHIP_2014082117.xls']
+    PsmcLotLoader(data_paths)
 

@@ -54,7 +54,6 @@ class MySQL(object):
             self.cur.execute(_sql_str)
             _result = self.cur.fetchall()
             _desc = self.cur.description
-            self.close()
         except:
             raise Exception("fetchRow Error, please check sql description")
         # ----------------------------------------------------------------------------------
@@ -84,7 +83,6 @@ class MySQL(object):
             self.cur.execute(_sql_str, _arg)
             _result = self.cur.fetchone()
             _desc = self.cur.description
-            self.close()
             _desc = [_desc[i][0] for i in range(len(_desc))]  # 获取表头
             _result = list(_result)
         except:
@@ -93,75 +91,123 @@ class MySQL(object):
 
     def fetchAll(self, tbname, items='*', condition=()):
         """根据sql语句查询数据库，返回所有结果，并关闭数据库（表头及数据以list形式返回）"""
-        _items = []
+        _anditems = []
+        _oritems = []
         _arg = []
-        # ----------------------------------------------------------------------------------
+        # ------------------------处理SQL语句SELECT XX FROM XX-------------------------------
         # ----------------------------------------------------------------------------------
         if items == '*':
             _prefix = "SELECT * FROM `{}`".format(tbname)
         else:
             _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        # ------------------------处理WHERE后续的部分--------------------------------------------
         # ----------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------
-        if condition == {} or condition == ():
+        if condition == {} or condition == ():   # 如果输入的是空字典，或空的元素
             _arg = ()
         else:
-            _columns = condition.keys()
-            for key in condition.keys():
-                _items.append("`%s` = %%s" % key)
-                _arg.append(condition[key])
-            _items = ' and '.join(_items)
+            _columns = condition.keys()     # WHERE 条件的名字['Current_Chip_Name', 'MLot_ID'...]
+            for key in condition.keys():      # 遍历WHERE条件, 目前只有'Current_Chip_Name'
+                _items = []
+                for i in range(len(condition[key])):    # 目前'Current_Chip_Name' 有两个元素
+                    _items.append("`%s` = %%s" % key)    # 生成list['`Current_Chip_Name` = %s', '`Current_Chip_Name` = %s']
+                    _arg.append(condition[key][i])        # 生成list['AAYRGKS3B-0K01', 'AAYRGKS3B-0L01']
+                _oritems.append(' OR '.join(_items))
+            _anditems = '(' + ') AND ('.join(_oritems) + ')'
+        # -------------------------用WHERE将前后部分连接--------------------------------------
         # ----------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------
-        if isinstance(_items, str):
-            _sql_str = " WHERE ".join([_prefix, str(_items)])
+        if isinstance(_anditems, str):
+            _sql_str = " WHERE ".join([_prefix, str(_anditems)])
         else:
             _sql_str = _prefix
+
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         try:
             self.cur.execute(_sql_str, _arg)
             _result = self.cur.fetchall()
             _desc = self.cur.description           # description包含name, type_code, display_size, internal_size, precision, scale, null_ok
-            self.close()
         except:
             raise Exception("fetchRow Error, pls check sql description")
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
-        _desc = [_desc[i][0] for i in range(len(_desc))]  # 将表头转换为list形式
-        _result = [list(i) for i in _result]   # 将数据转换为list形式
+        _desc = [_desc[i][0] for i in range(len(_desc))]  # 获取表头
+        _result = [list(i) for i in _result]
         return _desc, _result
 
-    def fetchpage(self, tbname, page=0, size=0, items='*', condition=()):
-        """根据sql语句查询数据库，按页返回数据（表头及数据以list形式返回）"""
-        _items = []
+    def dataCount(self, tbname, items='*', condition=()):
+        """根据sql语句查询数据库，返回所有结果，并关闭数据库（表头及数据以list形式返回）"""
+        _anditems = []
+        _oritems = []
         _arg = []
+        # ------------------------处理SQL语句SELECT XX FROM XX-------------------------------
         # ----------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------
-        if items == '*':   # 如果选择* 则返回所有 SELECT * FROM tbname
-            _prefix = "SELECT * FROM `{}`".format(tbname)
+        if items == '*':
+            _prefix = "SELECT count(*) FROM `{}`".format(tbname)
         else:
-            _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
-        # ----生成SELEC Item From tbname WHERE `Item1` = %s AND `Item2` = %s-----------------
+            _prefix = "SELECT count({}) FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        # ------------------------处理WHERE后续的部分--------------------------------------------
         # ----------------------------------------------------------------------------------
-        if condition == {} or condition == ():
+        if condition == {} or condition == ():   # 如果输入的是空字典，或空的元素
             _arg = ()
         else:
-            _columns = condition.keys()
-            for key in condition.keys():
-                _items.append("`%s` = %%s" % key)
-                _arg.append(condition[key])
-            _items = ' and '.join(_items)
+            _columns = condition.keys()     # WHERE 条件的名字['Current_Chip_Name', 'MLot_ID'...]
+            for key in condition.keys():      # 遍历WHERE条件, 目前只有'Current_Chip_Name'
+                _items = []
+                for i in range(len(condition[key])):    # 目前'Current_Chip_Name' 有两个元素
+                    _items.append("`%s` = %%s" % key)    # 生成list['`Current_Chip_Name` = %s', '`Current_Chip_Name` = %s']
+                    _arg.append(condition[key][i])        # 生成list['AAYRGKS3B-0K01', 'AAYRGKS3B-0L01']
+                _oritems.append(' OR '.join(_items))
+            _anditems = '(' + ') AND ('.join(_oritems) + ')'
+
+        # -------------------------用WHERE将前后部分连接--------------------------------------
         # ----------------------------------------------------------------------------------
-        # ----------------------------------------------------------------------------------
-        if isinstance(_items, str):
-            _sql_str = " WHERE ".join([_prefix, str(_items)])
+        if isinstance(_anditems, str):
+            _sql_str = " WHERE ".join([_prefix, str(_anditems)])
         else:
             _sql_str = _prefix
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
+        try:
+            self.cur.execute(_sql_str, _arg)
+            _count = self.cur.fetchall()
+        except:
+            raise Exception("fetchRow Error, pls check sql description")
+        return int(_count[0][0])
+
+    def fetchpage(self, tbname, page=0, size=0, items='*', condition=()):
+        """根据sql语句查询数据库，按页返回数据（表头及数据以list形式返回）, 同时去除Qty = 0"""
+        _anditems = []
+        _oritems = []
+        _arg = []
+        # ------------------------处理SQL语句SELECT XX FROM XX-------------------------------
+        # ----------------------------------------------------------------------------------
+        if items == '*':
+            _prefix = "SELECT * FROM `{}`".format(tbname)
+        else:
+            _prefix = "SELECT {} FROM `{}`".format(", ".join("".join(['`', _, '`']) for _ in items), tbname)
+        # ------------------------处理WHERE后续的部分--------------------------------------------
+        # ----------------------------------------------------------------------------------
+        if condition == {} or condition == ():   # 如果输入的是空字典，或空的元素
+            _arg = ()
+        else:
+            _columns = condition.keys()     # WHERE 条件的名字['Current_Chip_Name', 'MLot_ID'...]
+            for key in condition.keys():      # 遍历WHERE条件, 目前只有'Current_Chip_Name'
+                _items = []
+                for i in range(len(condition[key])):    # 目前'Current_Chip_Name' 有两个元素
+                    _items.append("`%s` = %%s" % key)    # 生成list['`Current_Chip_Name` = %s', '`Current_Chip_Name` = %s']
+                    _arg.append(condition[key][i])        # 生成list['AAYRGKS3B-0K01', 'AAYRGKS3B-0L01']
+                _oritems.append(' OR '.join(_items))
+            _anditems = '(' + ') AND ('.join(_oritems) + ')'
+        # -------------------------用WHERE将前后部分连接--------------------------------------
+        # ----------------------------------------------------------------------------------
+        if isinstance(_anditems, str):
+            _sql_str = " WHERE ".join([_prefix, str(_anditems)]) + "and Qty != 0 ORDER BY `Current_Time` DESC"
+        else:
+            _sql_str = _prefix + 'ORDER BY `Current_Time` DESC'
+        # ----------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------------
         if page != 0 and size != 0:
-            _sql_str = _sql_str + ' LIMIT %s,%s' % (size, (page - 1) * size)
+            _sql_str = _sql_str + ' LIMIT %s,%s' % ((page - 1) * size, page*size)
         else:
             pass
         # ----------------------------------------------------------------------------------
@@ -170,7 +216,6 @@ class MySQL(object):
             self.cur.execute(_sql_str, _arg)
             _result = self.cur.fetchall()
             _desc = self.cur.description           # description包含name, type_code, display_size, internal_size, precision, scale, null_ok
-            self.close()
         except:
             raise Exception("fetchRow Error, pls check sql description")
         # ----------------------------------------------------------------------------------
@@ -245,13 +290,13 @@ class MySQL(object):
 if __name__ == '__main__':
     """用法示例：选取，插入，更新，删除"""
     mysql = MySQL()   # 实例化MySQL, 默认设置为host='localhost', user="root", password="yp*963.", port=3306, charset="utf8")
-    mysql.selectDb('configdb')  # 连接数据库
+    mysql.selectDb('testdb')  # 连接数据库
 
     # """具体操作定义：选取单行或多行"""
-    table = 'psmc_product_version'
-    item = ['PowerChip_Product_ID']
-    mycondition = {'Nick_Name': 'Hanlu'}
-    des, mydata = mysql.fetchpage(tbname=table, size=50, page=0, items=item, condition=mycondition)
+    table = 'psmc_lot_tracing_table'
+    item = ['Current_Chip_Name']
+    mycondition = {'Current_Chip_Name': ['AAYRGKS2B-TD01', 'AAYRGKS3B-TH01', 'AAYRGKS3B-TL01'], 'Mlot_ID': ['BKL352', 'BKL351']}
+    count = mysql.dataCount(tbname=table, items=item, condition=mycondition)
     mysql.cur.close()
 
     """具体操作定义：插入单行或多行"""
