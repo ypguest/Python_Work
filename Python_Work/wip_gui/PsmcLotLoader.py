@@ -60,6 +60,7 @@ def PsmcLotLoader(data_paths):
         for index, row in datas.iterrows():
             wafer_no = DataToWafer(row['Wafer_No'])
             ser_total = pd.DataFrame(pd.concat([row[:-1], wafer_no])).T
+            print(ser_total)
             # noinspection PyBroadException
             try:     # 将Wafer信息更新至数据库
                 pd.io.sql.to_sql(ser_total, 'psmc_lot_tracing_table', con=myconnect, schema='testdb', if_exists='append', index=False)
@@ -243,6 +244,6 @@ def FileRepeatChk(file_path):
 
 
 if __name__ == "__main__":
-    data_paths = ['\\\\arctis\\qcxpub\\QRE\\04_QA(Component)\\99_Daily_Report\\01_PTC_Wip\\SINOCHIP_2014082117.xls']
+    data_paths = ['F:\\08 Daily_Report\\01_PTC_Wip\\SINOCHIP_2014082117.xls']
     PsmcLotLoader(data_paths)
 

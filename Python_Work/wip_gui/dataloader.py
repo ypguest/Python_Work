@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import pymysql
+import time
 from Python_Work.wip_gui.PsmcWipLoader import psmcWipLoader
 from Python_Work.wip_gui.PsmcLotLoader import PsmcLotLoader
 
@@ -9,7 +10,7 @@ from Python_Work.wip_gui.PsmcLotLoader import PsmcLotLoader
 def DirFolder(_file_path):
     """遍历路径，返回文件的全路径"""
     _file_paths = []
-    for root, dirs, files in os.walk(file_path):
+    for root, dirs, files in os.walk(_file_path):
         for file in files:
             _file_paths.append(os.path.join(root, file))
     return _file_paths
@@ -45,13 +46,23 @@ def FileRepeatChk(_file_path):
     return _data_paths
 
 
-if __name__ == "__main__":
+def main1():
     file_path = r'F:\08 Daily_Report\01_PTC_Wip'
     data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
-    PsmcLotLoader(data_paths)
-    # psmcWipLoader(data_paths)
+    try:
+        PsmcLotLoader(data_paths)
+    except Exception as e:
+        print('PsmcLotLoader ' + e)
+    try:
+        psmcWipLoader(data_paths)
+    except Exception as e:
+        print(' psmcWipLoader ' + e)
 
 
-
-
-
+if __name__ == "__main__":
+    # while True:
+    #     time_now = time.strftime("%H:%M:%S", time.localtime())  # 刷新
+    #     if time_now == '13:30:00':
+    #         print("ok")
+    #         time.sleep(300)
+    main1()
