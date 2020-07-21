@@ -11,16 +11,22 @@ import pymysql
 from sqlalchemy import create_engine
 
 
+class MySQL(object):
+    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+        """实例化后自动连接至数据库"""
+        self.host = host
+        self.database = database
+        self.port = port
+        self.user = user
+        self.password = password
+        self.charset = charset
+        self.sql_config = {'user': '{}', 'password': '{}', 'host': '{}', 'database': '{}', 'charset': '{}'.format(self.user, self.password, self.host, self.database, self.charset)}
+
+
 def GenLotWafer():
     # todo 从psmc_wip_traceing_table数据中获取当前时间=出货时间的lot信息，并返回元祖
-    sql_config = {
-        'user': 'root',
-        'password': 'yp*963.',
-        'host': 'localhost',
-        'database': 'testdb',
-        'charset': 'utf8'
-    }
-    connection = pymysql.connect(**sql_config)
+    mysql = MySQL(database='testdb', password='yp*963.')
+    connection = pymysql.connect(**mysql.sql_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
         cursor.execute("""SELECT MLot_ID, Lot_ID, `Current_Chip_Name`,`Current_Time`, Qty, `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, 
