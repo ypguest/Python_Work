@@ -7,18 +7,12 @@
 
 import sys
 import math
-import time
 import pandas as pd
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
 from Python_Work.gui_pyqt.DataGrid import DataGrid
-
-
-pd.set_option('display.max_columns', None)   # 显示不省略行
-pd.set_option('display.max_rows', None)      # 显示不省略列
-pd.set_option('display.width', None)         # 显示不换行
 
 
 class WipTable(QWidget):
@@ -129,9 +123,6 @@ class WipTable(QWidget):
         elif value == 'Product Q-Time Check':
             """返回所有的未发货，但是已经到WH的Lot，并Hight Light大约>60天的Lot"""
             self.lot_df = ProductQCheck(psmc_productid)
-
-
-
 
 
 def ProductQCheck(psmc_productid):

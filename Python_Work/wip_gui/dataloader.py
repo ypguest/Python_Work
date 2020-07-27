@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os
-import pymysql
+
 import time
 from Python_Work.wip_gui.PsmcLotLoader import PsmcLotLoader
 
@@ -16,9 +15,8 @@ def main1():
 
 
 if __name__ == "__main__":
-    # while True:
-    #     time_now = time.strftime("%H:%M:%S", time.localtime())  # 刷新
-    #     if time_now == '13:30:00':
-    #         print("ok")
-    #         time.sleep(300)
-    main1()
+    while True:
+        time_now = time.strftime("%H:%M:%S", time.localtime())  # 刷新
+        if time_now == '21:00:00':
+            main1()
+            time.sleep(300)

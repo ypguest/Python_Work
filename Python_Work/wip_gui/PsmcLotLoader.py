@@ -14,14 +14,12 @@ import pandas as pd
 import numpy as np
 import pymysql
 import xlrd
-from sqlalchemy import create_engine
-import time
 
 
 # --------------------------数据库设置---------------------------------
 # --------------------------------------------------------------------
 class MySQL(object):
-    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+    def __init__(self, host='localhost', database='testdb', user="root", password='uniic2020', port=3306, charset='utf8'):
         """实例化后自动连接至数据库"""
         self.host = host
         self.database = database
