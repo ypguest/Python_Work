@@ -42,7 +42,7 @@ class WipTable(QWidget):
         self.TableWidget = QTableView()
 
         # -------------设置Table的属性--------------
-        #self.TableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)   # 表格禁止编辑
+        self.TableWidget.setEditTriggers(QAbstractItemView.DoubleClicked)   # 表格禁止编辑
         # self.TableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # self.TableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)   # 按行选择
         # self.TableWidget.setAlternatingRowColors(1)                  # 行间隔变色（boolen）
