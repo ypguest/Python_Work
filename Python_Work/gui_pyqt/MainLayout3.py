@@ -36,7 +36,7 @@ class WipTable(QWidget):
     def iniUI(self):
 
         # ----------------定义布局，控件-------------
-        self.layout = QVBoxLayout()
+        layout = QVBoxLayout()
 
         # --------------定义QtableView控件----------
         self.TableWidget = QTableView()
@@ -58,10 +58,10 @@ class WipTable(QWidget):
         self.mydatagird.prevButton.clicked.connect(self.onPrevButtonClick)
         self.mydatagird.nextButton.clicked.connect(self.onNextButtonClick)
 
-        self.layout.addWidget(self.TableWidget)
-        self.layout.addWidget(self.mydatagird)
+        layout.addWidget(self.TableWidget)
+        layout.addWidget(self.mydatagird)
 
-        self.setLayout(self.layout)
+        self.setLayout(layout)
 
     def onPrevButtonClick(self):
         print(self.lot_df)
@@ -69,16 +69,16 @@ class WipTable(QWidget):
     def onNextButtonClick(self):
         print("""on PREV""")
 
-    def getQue1Msg(self, value):
-        """从MainLayout2获取Product Family Name信息"""
-        self.productFam = value
-
     def iniLocal(self):
         """用于初始化tableview中的数据"""
         self.productFam = ''
         self.productId = ''
         self.productVer = ''
         self.model = ''
+
+    def getQue1Msg(self, value):
+        """从MainLayout2获取Product Family Name信息"""
+        self.productFam = value
 
     def getQue2Msg(self, value):
         """从MainLayout2获取Product ID, Ver信息，如果product id和ver无法分裂，则有两种情况，只输入product id, 或什么都没输入"""
@@ -91,7 +91,7 @@ class WipTable(QWidget):
                 self.productId = ''
                 self.productVer = ''
 
-    def getFunMsg(self, value):
+    def getFunMsg(self, value):  # Value为点击功能的项目
         """从MainLayout2获取操作命令，并进行判断，将相应的数据传给TableWeiget"""
         productinfo = dict()
         # 获取参数
@@ -177,7 +177,7 @@ def ProductLotCheck(psmc_productid, targetpage, pagesize):
 
 def DailyWipCheck(psmc_productid):
     """通过查询当前数据库中最新的时间，根据时间反差当前Lot的信息"""
-    # 变量定义
+    # -------------------变量定义------------------------
     set_time = dict()
     lot_df = pd.DataFrame()
     mysql = MySQL()
@@ -188,7 +188,6 @@ def DailyWipCheck(psmc_productid):
     set_time['Current_Time'] = [time_df.iat[0, 0]]
     set_time['Current_Chip_Name'] = psmc_productid['PowerChip_Product_ID']  # 将Current_Chip_Name加入setting time字典，用于sql的筛选条件
     mysql.selectDb('testdb')  # 连接数据库
-    print(set_time)
     lotche_des, lotche_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition=set_time)
     mysql.cur.close()
     lot_df = lot_df.append(pd.DataFrame(lotche_sql_res, columns=lotche_des), ignore_index=True)

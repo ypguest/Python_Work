@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-用于更新xmc_wip_traceing_table和xmc
-1. 按Wafer Start Time/Lot Id排序;
-2. 对于数据库不存在的Lot id,更新Lot ID. 如果数据库存在Lot id更新，则更新当前Layer, Wafer No;
+用于更新xmc_wip_traceing_table和xmc_lot_traceing_table
+1. xmc_wip_traceing_table为所有xmc lot的详细生产信息
+2. xmc_lot_traceing_table为每个Lot的最后状态信息，对于数据库不存在的Lot id,更新Lot ID. 如果数据库存在Lot id更新，则更新当前Layer, Wafer No;
 3. 如果该Lot为分批Lot, 则在后续merge后Wafer Count为0， 故需要对当前Wafer No进行更新;
 """
 

@@ -13,10 +13,19 @@ import pymysql
 from sqlalchemy import create_engine
 
 
-# pd设置
-pd.set_option('display.max_columns', None)   # 显示不省略行
-pd.set_option('display.max_rows', None)      # 显示不省略列
-pd.set_option('display.width', None)         # 显示不换行
+# --------------------------数据库设置---------------------------------
+# --------------------------------------------------------------------
+class MySQL(object):
+    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+        """实例化后自动连接至数据库"""
+        self.host = host
+        self.database = database
+        self.port = port
+        self.user = user
+        self.password = password
+        self.charset = charset
+        self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
+        self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
 
 
 def DirFolder(file_path):
