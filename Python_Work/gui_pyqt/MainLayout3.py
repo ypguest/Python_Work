@@ -12,7 +12,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
-from Python_Work.gui_pyqt.DataGrid import DataGrid
 
 
 class WipTable(QWidget):
@@ -21,14 +20,14 @@ class WipTable(QWidget):
 
         # -----------------变量定义及初始化--------------
         self.TableWidget = None
-        self.mydatagird = None
 
+        self.fab = ''
         self.productFam = ''
         self.productId = ''
         self.productVer = ''
         self.model = ''
 
-        self.lot_df = pd.DataFrame()
+        self.lot_df = pd.DataFrame()  # 要写入数据框的数据
 
         # -----------------UI定义----------------
         self.iniUI()
@@ -48,33 +47,20 @@ class WipTable(QWidget):
         # self.TableWidget.setAlternatingRowColors(1)                  # 行间隔变色（boolen）
         # self.TableWidget.setSortingEnabled(True)
 
-        # ------------实例并初始化DataGride---------------
-        self.mydatagird = DataGrid()
-        self.mydatagird.pageRecordCount = 100  # 每页显示记录数
-        self.mydatagird.currentPage = 1  # 当前页
-        self.mydatagird.totalRecordCoutn = 0  # 总记录数
-        self.mydatagird.totalPage = 0  # 总页数
-
-        self.mydatagird.prevButton.clicked.connect(self.onPrevButtonClick)
-        self.mydatagird.nextButton.clicked.connect(self.onNextButtonClick)
-
         layout.addWidget(self.TableWidget)
-        layout.addWidget(self.mydatagird)
 
         self.setLayout(layout)
 
-    def onPrevButtonClick(self):
-        print(self.lot_df)
-
-    def onNextButtonClick(self):
-        print("""on PREV""")
-
     def iniLocal(self):
         """用于初始化tableview中的数据"""
+
+        self.fab = ''
         self.productFam = ''
         self.productId = ''
         self.productVer = ''
         self.model = ''
+
+        self.lot_df = pd.DataFrame()    # 要写入数据框的数据
 
     def getQue1Msg(self, value):
         """从MainLayout2获取Product Family Name信息"""

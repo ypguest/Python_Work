@@ -8,14 +8,18 @@ import MySQLdb as mysql
 
 
 class MySQL(object):
-    def __init__(self, host='localhost', user="root", password="yp*963.", port=3306, charset="utf8"):
+    def __init__(self, host='localhost', user="root", database='testdb', password="yp*963.", port=3306, charset="utf8"):
         """实例化后自动连接至数据库"""
         # -----------初始化参数----------------------
         self.host = host
+        self.database = database
         self.port = port
         self.user = user
         self.password = password
         self.charset = charset
+        self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
+        self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
+
         # ------------初始化连接----------------------
         self.cur = None  # 游标
         self.conn = None  # 指针
@@ -55,6 +59,7 @@ class MySQL(object):
         try:
             self.cur.execute(_sql_str)
             _result = self.cur.fetchall()
+
             _desc = self.cur.description
         except:
             raise Exception("fetchRow Error, please check sql description")

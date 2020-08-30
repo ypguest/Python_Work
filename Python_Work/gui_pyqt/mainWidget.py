@@ -11,9 +11,11 @@ from Python_Work.gui_pyqt.MainLayout3 import WipTable
 
 
 class MainWidget(QWidget):
+
     def __init__(self):
         super(MainWidget, self).__init__()
         self.SetScreen()  # 设置窗口大小
+        self.setFont(QFont("等线", 12))   # 设置字体及大小
 
         # -------------画分割线-------------
         self.mainline1 = QFrame(self)
@@ -50,6 +52,7 @@ class MainWidget(QWidget):
         # -------------添加mainlayout2的Qeuery控件-------------
         mainlayout2 = QHBoxLayout()
         self.ProdQuery1 = FamilyQuery()
+
         self.ProdQuery2 = ProdQuery()
         self.ProdQuery3 = FunButton()
         self.ProdQuery4 = TextQuery()
@@ -75,15 +78,15 @@ class MainWidget(QWidget):
 
         self.ProdQuery3.sendToMainL3.connect(self.tableWidget.iniLocal)    # 单击任何ProdQuery的push button均会将MainLayout3内部参数初始化
 
-        self.ProdQuery3.sendToMainL3.connect(self.ProdQuery1.sendMsg)      # 功能按钮被单击，触发sendMeg函数
-        self.ProdQuery3.sendToMainL3.connect(self.ProdQuery2.sendMsg)      # 功能按钮被单击，触发sendMeg函数
+        self.ProdQuery3.sendToMainL3.connect(self.ProdQuery1.sendMsg)      # 功能按钮被单击，触发ProdQuery1的sendMsg函数
+        self.ProdQuery3.sendToMainL3.connect(self.ProdQuery2.sendMsg)      # 功能按钮被单击，触发ProdQuery2的sendMsg函数
 
         self.ProdQuery1.sendToMain.connect(self.tableWidget.getQue1Msg)   # 触发sendMeg函数后，将ProdQuery1中的sendToMain信息传递给MainLayout3中的getQue1Msg函数
         self.ProdQuery2.sendToMainL3.connect(self.tableWidget.getQue2Msg)   # 触发sendMeg函数后，将ProdQuery2中的sendToMainL3信息传递给MainLayout3中的getQue2Msg函数
         self.ProdQuery3.sendToMainL3.connect(self.tableWidget.getFunMsg)   # 触发sendMeg函数后，将ProdQuery3中的sendToMainL3信息床底给MainLayout3中的getFunMsg函数
 
-    # -----------# 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi-------------
     def SetScreen(self):
+        """ 获取屏幕的分辨率, 并将窗体的大小设定为屏幕-100 pi """
         screen = QApplication.desktop().screenGeometry()  # 获取屏幕的分辨率
         width = int(screen.width())
         height = int(screen.height() * 0.9)

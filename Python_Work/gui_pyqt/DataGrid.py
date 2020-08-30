@@ -1,7 +1,5 @@
 
 import sys
-import pandas as pd
-import pymysql
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *

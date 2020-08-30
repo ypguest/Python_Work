@@ -20,11 +20,11 @@ class FamilyQuery(QWidget):
 
     def __init__(self):
         super(FamilyQuery, self).__init__()
-        self.setFixedSize(300, 200)
+        self.setFixedSize(200, 200)
 
         # ---- 设置框体 ----
         self.groupbox = QGroupBox('Product Family Select', self)   # 增加GroupBox框体
-        self.groupbox.setFixedSize(300, 200)  # 设置控件的大小
+        self.groupbox.setFixedSize(200, 200)  # 设置控件的大小
         self.groupbox.setAlignment(Qt.AlignLeft)    # 将QGroup的名称放到左边
 
         # ---- 设置布局 ----
@@ -32,7 +32,7 @@ class FamilyQuery(QWidget):
 
         self.listview = QListView()
         self.listModel = QStringListModel()           # 创建封装列表数据源的模型
-        self.list = ProdList("Nick_Name")     # 创建数据源, 查询Product_Version中Nick_Name的列表
+        self.list = ProdFamList("Nick_Name")     # 创建数据源, 查询Product_Version中Nick_Name的列表
         self.listModel.setStringList(self.list)       # 将数据和模型进行关联
         self.listview.setModel(self.listModel)             # 模型与空间关联
 
@@ -41,17 +41,19 @@ class FamilyQuery(QWidget):
 
         self.lineEdit = QLineEdit("")      # 确认的信息显示到Label中
         self.lineEdit.setPlaceholderText("Please Select Product Family")
+        self.lineEdit.setFont(QFont("等线", 8))
 
-        # todo 将控件放入栅格布局，起始行，列，跨越行，列
+        # ---- 将控件放入栅格布局，起始行，列，跨越行，列 ----
         layout.addWidget(self.listview, 1, 0, 3, 4)
         layout.addWidget(self.lineEdit, 5, 0, 1, 4)
 
         self.groupbox.setLayout(layout)
 
     def clicked(self, qModelIndex):
+        print(self.listview.is())
         """ 点击后将值输入到LineEdit内，并将str信息发送至Product Query组件 """
         self.lineEdit.setText(self.list[qModelIndex.row()])
-        self.sendToProQuery.emit(self.list[qModelIndex.row()])
+        self.sendMsg()
 
     def sendMsg(self):
         """ 将str信息发送至MainLayout3的信号 """
@@ -65,6 +67,7 @@ class ProdQuery(QWidget):
     def __init__(self):
         super(ProdQuery, self).__init__()
         self.fab = 'PSMC'
+        self.ProdFam = None
         self.setFixedSize(300, 200)
 
         self.groupbox = QGroupBox('Product and Version Select', self)   # 增加GroupBox框体
@@ -81,22 +84,26 @@ class ProdQuery(QWidget):
 
         self.listviewPid = QListView()
         self.listModelPid = QStringListModel()           # 创建封装列表数据源的模型
-        self.listPid = ProdList("UniIC_Product_ID")     # 通过数据库查询Product_ID, 并根据结果创建数据源
+        self.listPid = ProdList("UniIC_Product_ID", self.fab)     # 通过数据库查询Product_ID, 并根据结果创建数据源
 
         self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
+        self.listviewPid.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 支持多选
         self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
         self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
-
+        self.listviewPid.setAlternatingRowColors(True)
         # ---- Product Version QListView设置 ----
         self.listviewVer = QListView()
         self.listModeVer = QStringListModel()           # 创建封装列表数据源的模型
-        self.listVer = ProdList("UniIC_Product_Version")     # 创建数据源
+        self.listVer = ProdList("UniIC_Product_Version", self.fab)     # 创建数据源
+
         self.listModeVer.setStringList(self.listVer)       # 将数据和模型进行关联
+        self.listviewVer.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 支持多选
         self.listviewVer.setModel(self.listModeVer)             # 模型与空间关联
         self.listviewVer.clicked.connect(self.clickedVer)
 
         self.lineEdit = QLineEdit("")      # 确认的信息显示到Label中
         self.lineEdit.setPlaceholderText("Please Select Product ID & Ver")
+        self.lineEdit.setFont(QFont("等线", 8))
 
         # ---- ProdQuery中的控件布局 ----
         layout.addWidget(self.btnfab1, 0, 0, 1, 1)
@@ -107,41 +114,43 @@ class ProdQuery(QWidget):
 
         self.groupbox.setLayout(layout)
 
-    def clickedPid(self, qModelIndex):
+    def clickedfab(self):
+        self.fab = self.sender().text()
+        self.getMsg(self.ProdFam)
+
+    def clickedPid(self):
+        datalist = list()
         """当数据进行切换时，将选中的Product ID数据放入LineEdit中"""
-        self.lineEdit.setText(self.listPid[qModelIndex.row()])      # 将LineEdit里的内容进行写入lineEdit
-        self.listVer = ProdQueryVerList(self.listPid[qModelIndex.row()])     # 创建数据源
+        for i in self.listviewPid.selectedIndexes():
+            datalist.append(i.data())
+        self.lineEdit.setText(','.join(datalist))      # 将LineEdit里的内容进行写入lineEdit
+        self.listVer = ProdQueryVerList(datalist, self.fab)     # 创建数据源
         self.listModeVer.setStringList(self.listVer)  # 将数据和模型进行关联
         self.listviewVer.setModel(self.listModeVer)  # 模型与空间关联
 
-    def clickedVer(self, qModelIndex):
+    def clickedVer(self):
         """定义单击List中的Ver事件，如果当lineEdit.text()为空时，则将版本放入"""
+        datalist = list()
         if self.lineEdit.text() == '':
-            self.lineEdit.setText(self.listVer[qModelIndex.row()])
+            for i in self.listVer.selectedIndexes():
+                datalist.append(i.data())
+            self.lineEdit.setText(','.join(datalist))  # 将LineEdit里的内容进行写入lineEdit
         elif len(self.lineEdit.text().split(",")) == 1:
-            if self.lineEdit.text() in self.listVer:
-                self.lineEdit.setText(self.listVer[qModelIndex.row()])
-            else:
-                self.lineEdit.setText(self.lineEdit.text() + ',' + self.listVer[qModelIndex.row()])
-        elif len(self.lineEdit.text().split(",")) == 2:
-            self.lineEdit.setText(self.lineEdit.text().split(",")[0] + ',' + self.listVer[qModelIndex.row()])
-        else:
             pass
 
-    def clickedfab(self):
-        self.fab = self.sender().text()
-
-    def getMsg(self, value):
+    def getMsg(self, value=None):
         self.lineEdit.setText('')
-        self.listPid = InputQueryId(value)
-        self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
-        self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
+        self.ProdFam = value
+        if value is not None:
+            self.listPid = InputQueryId(value, self.fab)
+            self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
+            self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
 
-        self.listVer = InputQueryVer(value)     # 创建数据源
-        self.listModeVer.setStringList(self.listVer)       # 将数据和模型进行关联
-        self.listviewVer.setModel(self.listModeVer)             # 模型与空间关联
+            self.listVer = InputQueryVer(value, self.fab)     # 创建数据源
+            self.listModeVer.setStringList(self.listVer)       # 将数据和模型进行关联
+            self.listviewVer.setModel(self.listModeVer)             # 模型与空间关联
 
-        self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
+            self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
 
     def sendMsg(self):
         self.sendToMainL3.emit(self.lineEdit.text(), self.fab)
@@ -210,38 +219,58 @@ class TextQuery(QWidget):
         self.groupbox.setLayout(layout)
 
 
-def ProdList(Item):
+def ProdFamList(query1):
     """用于FamilyQuery & ProdQuery中, 输入Item(Product_ID or Ver)，并查找psmc_product_version表中所有的匹配值(List)"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = 'SELECT DISTINCT %s FROM psmc_product_version ORDER By %s' % (Item, Item)
+    sql = "SELECT DISTINCT %s FROM psmc_product_version ORDER By '%s'" % (query1, query1)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
 
-def ProdQueryVerList(Item):
-    """用于ProdQuery中, 实现输入UniIC_Product_Id（1G-H45），查找出对应的所有UniIC_Product_Version(V05)"""
+def ProdList(query1, fab):
+    """用于FamilyQuery & ProdQuery中, 输入Item(Product_ID or Ver)，并查找psmc_product_version表中所有的匹配值(List)"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE UniIC_Product_Id = '%s' ORDER By UniIC_Product_Version" % Item
+    sql = "SELECT DISTINCT %s FROM psmc_product_version Where Fab = '%s' ORDER By '%s'" % (query1, fab, query1)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
 
-def InputQueryId(Item):
+def ProdQueryVerList(items, fab):
+    """用于ProdQuery中, 实现输入UniIC_Product_Id（1G-H45），查找出对应的所有UniIC_Product_Version(V05)"""
+    results = list()
+    mysql = MySQL()
+    mysql.selectDb('configdb')
+    for item in items:
+        sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE UniIC_Product_Id = '%s' and Fab = '%s' ORDER By UniIC_Product_Version" % (item, fab)
+        desc, result = mysql.sqlAll(sql)
+        results.extend([result[i][0] for i in range(len(result))])
+    results = list(set(results))[:]
+    for i in range(len(results)-1):
+        if int(results[i+1].replace('V', '')) < int(results[i].replace('V', '')):
+            for j in range(i+1, 0, -1):
+                if int(results[j].replace('V', '')) < int(results[j-1].replace('V', '')):
+                    results[j-1], results[j] = results[j], results[j-1]
+                else:
+                    break
+    return results
+
+
+def InputQueryId(query, fab):
     """用于ProdQuery中, 实现输入Nick_Name，查找出对应的所有UniIC_Product_ID"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT UniIC_Product_ID FROM psmc_product_version WHERE Nick_Name = '%s' ORDER By UniIC_Product_ID" % Item
+    sql = "SELECT DISTINCT UniIC_Product_ID FROM psmc_product_version WHERE Nick_Name = '%s' and Fab = '%s' ORDER By UniIC_Product_ID" % (query, fab)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
 
-def InputQueryVer(Item):
+def InputQueryVer(query, fab):
     """用于ProdQuery中, 输入Nick_Name，查找出对应的所有UniIC_Product_Version"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE Nick_Name = '%s' ORDER By UniIC_Product_Version" % Item
+    sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE Nick_Name = '%s' and Fab = '%s' ORDER By UniIC_Product_Version" % (query,fab)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
