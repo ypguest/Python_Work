@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""查询数据库，并将Setp按工艺顺序提取出来"""
+
+"""查询xmc wip数据库，并将Setp按工艺顺序提取出来"""
 """
 # 1. 将Lot ID提取出来;
 # 2. 将Setp 按照Lot IDt提取出来并按时间排序;
@@ -9,7 +10,6 @@
 
 import pandas as pd
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
-
 
 # pd设置
 pd.set_option('display.max_columns', None)   # 显示不省略行
@@ -30,9 +30,9 @@ def select_lot(productid):
     return Lotid
 
 
-def select_layer(product_layer, host, user, password):
+def select_layer(product_layer):
     """将当前的step从数据库中提取出来"""
-    mysql = MySQL(host=host, user=user, password=password)
+    mysql = MySQL()
     mysql.selectDb('product_layer')
     sql = "SELECT * FROM %s" % product_layer
     desc, result = mysql.sqlAll(sql)
@@ -41,7 +41,7 @@ def select_layer(product_layer, host, user, password):
     return df
 
 
-def get_product(host, user, password):
+def get_product():
     """将Lot Id从数据库中提取出来"""
     mysql = MySQL()
     mysql.selectDb('configdb')
@@ -95,7 +95,6 @@ def check_same(data1, data2):
 
 
 def steprank():
-
     # ---- 获取库中的产品清单 ----
     product_layer_list = get_product()
     for product_layer in product_layer_list:    # 对每一种产品进行遍历
@@ -130,41 +129,10 @@ def steprank():
                     data = data.rename(columns={'Stage': 'Layer'})
                     current_step = check_dif(current_step, data)
                     current_step = check_same(current_step, data)
-        # ---- 写入更新后的step
-        try:  # 将Wafer信息更新至数据库
-            pd.io.sql.to_sql(current_step, 'psmc_lot_tracing_table', con=mysql.engine, if_exists='append', index=False)
-        except Exception as err:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
-            print(err)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # ---- 写入更新后的step到product_layer数据库 ----
+        stepsql = MySQL(database='product_layer')
+        pd.io.sql.to_sql(current_step, product_layer, con=stepsql.engine, index=True, index_label='No', if_exists='replace')
 
 
 if __name__ == '__main__':
     steprank()
-
-
-
-
-
-
-
-
-
-
-
