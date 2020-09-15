@@ -113,6 +113,7 @@ class MySQL(object):
             _arg = ()
         else:
             _columns = condition.keys()  # WHERE 条件的名字['Current_Chip_Name', 'MLot_ID'...]
+
             for key in condition.keys():  # 遍历WHERE条件, 目前只有'Current_Chip_Name'
                 _items = []
                 for i in range(len(condition[key])):  # 目前'Current_Chip_Name' 有两个元素

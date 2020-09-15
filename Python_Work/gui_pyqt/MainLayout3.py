@@ -163,9 +163,10 @@ def ProductLotCheck(psmc_productid, targetpage, pagesize):
 
 def DailyWipCheck(psmc_productid):
     """通过查询当前数据库中最新的时间，根据时间反差当前Lot的信息"""
-    # -------------------变量定义------------------------
+    # ---- 变量定义----
     set_time = dict()
     lot_df = pd.DataFrame()
+    # ---- 连接数据库 ----
     mysql = MySQL()
     mysql.selectDb('testdb')  # 连接数据库
     time_des, time_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items=['Current_Time'])

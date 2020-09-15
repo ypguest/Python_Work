@@ -30,6 +30,23 @@ def select_lot(productid):
     return Lotid
 
 
+def select_lot1(productid):
+    """选择lot traceing table中时间最近的lot, 并将Lot Id从数据库中提取出来"""
+    Lotid = []
+    # ---- 连接数据库 ----
+    mysql = MySQL()
+    mysql.selectDb('testdb')  # 连接数据库
+    time_des, time_sql_res = mysql.fetchAll(tbname='xmc_lot_tracing_table', items=['Current_Time'])
+    time_df = pd.DataFrame(time_sql_res, columns=time_des)  # 生成current_time的dataframe
+    set_time = time_df.max()[0]  # 选出最大的时间
+    for Pid in productid:
+        sql = "SELECT DISTINCT MLot_ID FROM xmc_lot_tracing_table WHERE `Current_Chip_Name` = '%s' and `Current_time` = '%s'" % (Pid, set_time)
+        desc, result = mysql.sqlAll(sql)
+        Lotid = Lotid + [result[i][0] for i in range(len(result))]
+    mysql.cur.close()
+    return Lotid
+
+
 def select_layer(product_layer):
     """将当前的step从数据库中提取出来"""
     mysql = MySQL()
@@ -107,7 +124,7 @@ def steprank():
 
         # ---- 获取数据库中的Lot_Id ----
         product_id = get_productId(product_layer)  # 根据Product_layer获取相应的product_id
-        lot_id_list = select_lot(product_id)    # 根据product_id获取Lot_Id
+        lot_id_list = select_lot1(product_id)    # 根据product_id获取Lot_Id
         mysql = MySQL()
         mysql.selectDb('testdb')
         for lot in lot_id_list:

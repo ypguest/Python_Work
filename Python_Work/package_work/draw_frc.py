@@ -1,3 +1,6 @@
+"""针对S1产品的特性，绘制FRC map"""
+
+
 import os
 import struct
 import re
@@ -101,5 +104,5 @@ def createrdmap(filename):
 
 
 if __name__ == '__main__':
-    path = r'Z:\QRE\00_Production_Public\Donghu\Donghu-SEDS1\17 Quality_control\03_CP\Raw data\1st Lot PPB020\CP_P_PPB020.106_08_1'
+    path = r'Z:\TMP\mabin\PL7511 #21 #23\PL7511_23_CP1\CP_P_PL7511_23_1'
     createrdmap(path)

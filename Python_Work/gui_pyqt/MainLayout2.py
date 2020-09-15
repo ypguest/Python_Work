@@ -50,7 +50,6 @@ class FamilyQuery(QWidget):
         self.groupbox.setLayout(layout)
 
     def clicked(self, qModelIndex):
-        print(self.listview.is())
         """ 点击后将值输入到LineEdit内，并将str信息发送至Product Query组件 """
         self.lineEdit.setText(self.list[qModelIndex.row()])
         self.sendMsg()
