@@ -56,6 +56,7 @@ class MySQL(object):
             raise Exception("db error,please check the sql config.")
 
     def sqlAll(self, _sql_str, _arg=()):
+
         try:
             self.cur.execute(_sql_str)
             _result = self.cur.fetchall()

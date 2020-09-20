@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
 
-import pylab as pl
-
 # plt设置
 plt.style.use('ggplot')    # R语言风格
 
@@ -55,17 +53,17 @@ def draw_history(lot_id, fab_code):
     im = 0    # 图层变量
 
     # ---- 根据Lot id返回lot histroy相关信息 ----
-    if fab_code == 'psmc':
+    if fab_code == 'PSMC':
         data = history_query(lot_id)
-    if fab_code == 'xmc':
+    elif fab_code == 'XMC':
         data = history_query1(lot_id)
 
     product_id = data['Current_Chip_Name'].unique()   # 提取出该Lot涉及的product信息
 
     # ---- 根据Lot所涉及到的product_id，查询涉及的stage顺序信息 ----
-    if fab_code == 'psmc':
+    if fab_code == 'PSMC':
         product_layers = layer_query(product_id)
-    if fab_code == 'xmc':
+    elif fab_code == 'XMC':
         product_layers = layer_query1(product_id)
 
     # ---- 将layer生成不重复的list ----
@@ -78,10 +76,10 @@ def draw_history(lot_id, fab_code):
     # ---- 根据product_layer信息生成wip信息 ----
     for product_layer in product_layer_list:
         # ---- 根据product_layer查找产品名称列表 ----
-        if fab_code == 'xmc':
-            product_list = product_layers['XMC_Product_ID'].loc[product_layers['Product_Layer'] == product_layer].tolist()
-        if fab_code == 'psmc':
+        if fab_code == 'XMC':
             product_list = product_layers['PSMC_Product_ID'].loc[product_layers['Product_Layer'] == product_layer].tolist()
+        elif fab_code == 'PSMC':
+            product_list = product_layers['XMC_Product_ID'].loc[product_layers['Product_Layer'] == product_layer].tolist()
 
         re_data = data.loc[data['Current_Chip_Name'].isin(product_list)].copy()
 

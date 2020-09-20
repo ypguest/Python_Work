@@ -48,6 +48,7 @@ class MainWindows(QMainWindow):
         height = int(screen.height())
         self.setGeometry(0, 0, width, height)
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(r'../pyqt_design/images/UniIC_Logo.ico'))   # 应用程序的图标设置

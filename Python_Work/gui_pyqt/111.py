@@ -1,5 +1,4 @@
-import matplotlib.pyplot as plt
-
-fig = plt.figure()
-ax = plt.axes([1,2],[3,4])
-plt.show()
+import re
+AA = '[donghu,V03],[donghu1,V04],[donghu1,V04]'
+a = re.split('//[|//]', AA)
+print(a)

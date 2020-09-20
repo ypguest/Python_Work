@@ -65,17 +65,19 @@ class WipTable(QWidget):
     def getQue1Msg(self, value):
         """从MainLayout2获取Product Family Name信息"""
         self.productFam = value
+        print('1', value)
 
-    def getQue2Msg(self, value):
+    def getQue2Msg(self, value1, value2):
         """从MainLayout2获取Product ID, Ver信息，如果product id和ver无法分裂，则有两种情况，只输入product id, 或什么都没输入"""
-        try:
-            self.productId, self.productVer = value.split(',')
-        except ValueError:
-            if value:
-                self.productId = value
-            else:
-                self.productId = ''
-                self.productVer = ''
+        print('2', value1, value2)
+        # try:
+        #     self.productId, self.productVer = value.split(',')
+        # except ValueError:
+        #     if value:
+        #         self.productId = value
+        #     else:
+        #         self.productId = ''
+        #         self.productVer = ''
 
     def getFunMsg(self, value):  # Value为点击功能的项目
         """从MainLayout2获取操作命令，并进行判断，将相应的数据传给TableWeiget"""
@@ -96,19 +98,19 @@ class WipTable(QWidget):
             self.model = PandasModel(self.lot_df)
             self.TableWidget.setModel(self.model)
 
-        elif value == 'Product Lot Check':
-            """返回所有的Lot的信息最终状态(包含已经在WH的产品)"""
-            self.mydatagird.currentPage = 1  # 当前页
-            self.mydatagird.totalRecordCoutn, self.lot_df = ProductLotCheck(psmc_productid, self.mydatagird.currentPage, self.mydatagird.pageRecordCount)
-            self.mydatagird.totalPage = math.ceil(self.mydatagird.totalRecordCoutn / self.mydatagird.pageRecordCount)
-
-            self.mydatagird.switchPage.setText("当前%s/%s页" % (self.mydatagird.currentPage, self.mydatagird.totalPage))
-            self.model = PandasModel(self.lot_df)
-            self.TableWidget.setModel(self.model)
-
-        elif value == 'Product Q-Time Check':
-            """返回所有的未发货，但是已经到WH的Lot，并Hight Light大约>60天的Lot"""
-            self.lot_df = ProductQCheck(psmc_productid)
+        # elif value == 'Product Lot Check':
+        #     """返回所有的Lot的信息最终状态(包含已经在WH的产品)"""
+        #     self.mydatagird.currentPage = 1  # 当前页
+        #     self.mydatagird.totalRecordCoutn, self.lot_df = ProductLotCheck(psmc_productid, self.mydatagird.currentPage, self.mydatagird.pageRecordCount)
+        #     self.mydatagird.totalPage = math.ceil(self.mydatagird.totalRecordCoutn / self.mydatagird.pageRecordCount)
+        #
+        #     self.mydatagird.switchPage.setText("当前%s/%s页" % (self.mydatagird.currentPage, self.mydatagird.totalPage))
+        #     self.model = PandasModel(self.lot_df)
+        #     self.TableWidget.setModel(self.model)
+        #
+        # elif value == 'Product Q-Time Check':
+        #     """返回所有的未发货，但是已经到WH的Lot，并Hight Light大约>60天的Lot"""
+        #     self.lot_df = ProductQCheck(psmc_productid)
 
 
 def ProductQCheck(psmc_productid):
@@ -132,7 +134,7 @@ def GetProductId(productinfo):
     psmc_productid = dict()
     product = []
     tbname = 'psmc_product_version'
-    item = ['PowerChip_Product_ID']
+    item = ['psmc_Product_ID']
     mysql = MySQL()
     mysql.selectDb('configdb')  # 连接数据库
     psmc_des, psmc_sql_res = mysql.fetchAll(tbname=tbname, items=item, condition=productinfo)
@@ -147,8 +149,8 @@ def ProductLotCheck(psmc_productid, targetpage, pagesize):
     """如果点击Lot Check, 则根据输入的PowerChip_Product_Version List字典返回查询的数据结果"""
     mysql = MySQL()
     mysql.selectDb('testdb')  # 连接数据库
-    totalpage = mysql.dataCount(tbname='psmc_lot_tracing_table', items='*', condition={'Current_Chip_Name': psmc_productid['PowerChip_Product_ID']})
-    lotche_des, lotche_sql_res = mysql.fetchpage(tbname='psmc_lot_tracing_table', page=targetpage, size=pagesize, items='*', condition={'Current_Chip_Name': psmc_productid['PowerChip_Product_ID']})
+    totalpage = mysql.dataCount(tbname='psmc_lot_tracing_table', items='*', condition={'Current_Chip_Name': psmc_productid['psmc_Product_ID']})
+    lotche_des, lotche_sql_res = mysql.fetchpage(tbname='psmc_lot_tracing_table', page=targetpage, size=pagesize, items='*', condition={'Current_Chip_Name': psmc_productid['psmc_Product_ID']})
     mysql.cur.close()
     lot_df = pd.DataFrame(lotche_sql_res, columns=lotche_des)
 
@@ -173,7 +175,7 @@ def DailyWipCheck(psmc_productid):
     time_df = pd.DataFrame(time_sql_res, columns=time_des)  # 生成current_time的dataframe
     time_df.sort_values(by='Current_Time', ascending=False, inplace=True)
     set_time['Current_Time'] = [time_df.iat[0, 0]]
-    set_time['Current_Chip_Name'] = psmc_productid['PowerChip_Product_ID']  # 将Current_Chip_Name加入setting time字典，用于sql的筛选条件
+    set_time['Current_Chip_Name'] = psmc_productid['psmc_Product_ID']  # 将Current_Chip_Name加入setting time字典，用于sql的筛选条件
     mysql.selectDb('testdb')  # 连接数据库
     lotche_des, lotche_sql_res = mysql.fetchAll(tbname='psmc_lot_tracing_table', items='*', condition=set_time)
     mysql.cur.close()

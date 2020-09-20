@@ -6,6 +6,7 @@
 """
 
 import sys
+import re
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -86,10 +87,11 @@ class ProdQuery(QWidget):
         self.listPid = ProdList("UniIC_Product_ID", self.fab)     # 通过数据库查询Product_ID, 并根据结果创建数据源
 
         self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
-        self.listviewPid.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 支持多选
         self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
+        self.listviewPid.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 支持多选
         self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
-        self.listviewPid.setAlternatingRowColors(True)
+        # self.listviewPid.setAlternatingRowColors(True)     # 设置交叠
+
         # ---- Product Version QListView设置 ----
         self.listviewVer = QListView()
         self.listModeVer = QStringListModel()           # 创建封装列表数据源的模型
@@ -115,6 +117,11 @@ class ProdQuery(QWidget):
 
     def clickedfab(self):
         self.fab = self.sender().text()
+        self.listPid = ProdList("UniIC_Product_ID", self.fab)     # 通过数据库查询Product_ID, 并根据结果创建数据源
+        self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
+        self.listVer = ProdList("UniIC_Product_Version", self.fab)     # 创建数据源
+        self.listModeVer.setStringList(self.listVer)       # 将数据和模型进行关联
+
         self.getMsg(self.ProdFam)
 
     def clickedPid(self):
@@ -122,20 +129,29 @@ class ProdQuery(QWidget):
         """当数据进行切换时，将选中的Product ID数据放入LineEdit中"""
         for i in self.listviewPid.selectedIndexes():
             datalist.append(i.data())
-        self.lineEdit.setText(','.join(datalist))      # 将LineEdit里的内容进行写入lineEdit
+        self.lineEdit.setText('[' + '],['.join(datalist) + ']')      # 将LineEdit里的内容进行写入lineEdit
         self.listVer = ProdQueryVerList(datalist, self.fab)     # 创建数据源
         self.listModeVer.setStringList(self.listVer)  # 将数据和模型进行关联
-        self.listviewVer.setModel(self.listModeVer)  # 模型与空间关联
 
     def clickedVer(self):
         """定义单击List中的Ver事件，如果当lineEdit.text()为空时，则将版本放入"""
         datalist = list()
-        if self.lineEdit.text() == '':
-            for i in self.listVer.selectedIndexes():
-                datalist.append(i.data())
-            self.lineEdit.setText(','.join(datalist))  # 将LineEdit里的内容进行写入lineEdit
-        elif len(self.lineEdit.text().split(",")) == 1:
-            pass
+        # ---- 将点击的内容变成list ----
+        for i in self.listviewVer.selectedIndexes():
+            datalist.append(i.data())
+        if self.lineEdit.text() == '' or re.findall(r'\[V\d*\]', self.lineEdit.text()):
+            self.lineEdit.setText('[' + '],['.join(datalist) + ']')  # 将LineEdit里的内容进行写入lineEdit
+        else:
+            matchobj = re.split(r'\[|\],\[|\]', self.lineEdit.text())
+            matchobj = [i for i in matchobj if i != '']
+            for i in range(len(matchobj)):
+                if matchobj[i].split(','):
+                    matchobj[i] = matchobj[i].split(',')[0]
+            datalist1 = []
+            for i in range(len(matchobj)):
+                for j in range(len(datalist)):
+                    datalist1.append(matchobj[i] + ',' + datalist[j])
+            self.lineEdit.setText('[' + '],['.join(datalist1) + ']')
 
     def getMsg(self, value=None):
         self.lineEdit.setText('')
@@ -143,15 +159,14 @@ class ProdQuery(QWidget):
         if value is not None:
             self.listPid = InputQueryId(value, self.fab)
             self.listModelPid.setStringList(self.listPid)       # 将数据和模型进行关联
-            self.listviewPid.setModel(self.listModelPid)             # 模型与控件关联
 
             self.listVer = InputQueryVer(value, self.fab)     # 创建数据源
             self.listModeVer.setStringList(self.listVer)       # 将数据和模型进行关联
-            self.listviewVer.setModel(self.listModeVer)             # 模型与空间关联
 
             self.listviewPid.clicked.connect(self.clickedPid)        # 当数据进行切换时，将选中的数据放入LineEdit中
 
     def sendMsg(self):
+        print(self.lineEdit.text(), self.fab)
         self.sendToMainL3.emit(self.lineEdit.text(), self.fab)
 
 
@@ -231,7 +246,7 @@ def ProdList(query1, fab):
     """用于FamilyQuery & ProdQuery中, 输入Item(Product_ID or Ver)，并查找psmc_product_version表中所有的匹配值(List)"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT %s FROM psmc_product_version Where Fab = '%s' ORDER By '%s'" % (query1, fab, query1)
+    sql = "SELECT DISTINCT %s FROM %s_product_version ORDER By '%s'" % (query1, fab, query1)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
@@ -242,7 +257,7 @@ def ProdQueryVerList(items, fab):
     mysql = MySQL()
     mysql.selectDb('configdb')
     for item in items:
-        sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE UniIC_Product_Id = '%s' and Fab = '%s' ORDER By UniIC_Product_Version" % (item, fab)
+        sql = "SELECT DISTINCT UniIC_Product_Version FROM %s_product_version WHERE UniIC_Product_Id = '%s' ORDER By UniIC_Product_Version" % (fab, item)
         desc, result = mysql.sqlAll(sql)
         results.extend([result[i][0] for i in range(len(result))])
     results = list(set(results))[:]
@@ -260,7 +275,7 @@ def InputQueryId(query, fab):
     """用于ProdQuery中, 实现输入Nick_Name，查找出对应的所有UniIC_Product_ID"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT UniIC_Product_ID FROM psmc_product_version WHERE Nick_Name = '%s' and Fab = '%s' ORDER By UniIC_Product_ID" % (query, fab)
+    sql = "SELECT DISTINCT UniIC_Product_ID FROM %s_product_version WHERE Nick_Name = '%s' ORDER By UniIC_Product_ID" % (fab, query)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
@@ -269,7 +284,7 @@ def InputQueryVer(query, fab):
     """用于ProdQuery中, 输入Nick_Name，查找出对应的所有UniIC_Product_Version"""
     mysql = MySQL()
     mysql.selectDb('configdb')
-    sql = "SELECT DISTINCT UniIC_Product_Version FROM psmc_product_version WHERE Nick_Name = '%s' and Fab = '%s' ORDER By UniIC_Product_Version" % (query,fab)
+    sql = "SELECT DISTINCT UniIC_Product_Version FROM %s_product_version WHERE Nick_Name = '%s' ORDER By UniIC_Product_Version" % (fab, query)
     desc, result = mysql.sqlAll(sql)
     return [result[i][0] for i in range(len(result))]
 
