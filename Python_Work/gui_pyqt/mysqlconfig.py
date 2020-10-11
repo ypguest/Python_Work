@@ -56,7 +56,6 @@ class MySQL(object):
             raise Exception("db error,please check the sql config.")
 
     def sqlAll(self, _sql_str, _arg=()):
-
         try:
             self.cur.execute(_sql_str)
             _result = self.cur.fetchall()
@@ -128,7 +127,6 @@ class MySQL(object):
             _sql_str = " WHERE ".join([_prefix, str(_anditems)])
         else:
             _sql_str = _prefix
-
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         try:

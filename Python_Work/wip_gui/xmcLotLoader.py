@@ -148,6 +148,7 @@ def FileRepeatChk(_file_path):
     mysql = MySQL(database='testdb')
     sql_config = mysql.sql_config
     connection = pymysql.connect(**sql_config)
+
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
@@ -191,6 +192,7 @@ def xmcLotLoader(data_paths):
 
     # ----------------确认路径中的不重复文件，并返回文件名的list--------------------------------
     file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
+
     # ------------遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径-----------------
     for file_path in file_paths:
         loadtowip = pd.DataFrame()
@@ -242,7 +244,7 @@ def xmcLotLoader(data_paths):
 
 
 if __name__ == "__main__":
-    path = r'Z:\QRE\04_QA(Component)\99_Daily_Report\19_XMC_WIP Report'
+    path = r'C:\Users\yinpeng\Desktop\wip'
     xmcLotLoader(path)
 
 

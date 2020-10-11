@@ -53,17 +53,17 @@ def draw_history(lot_id, fab_code):
     im = 0    # 图层变量
 
     # ---- 根据Lot id返回lot histroy相关信息 ----
-    if fab_code == 'PSMC':
+    if fab_code == 'psmc':
         data = history_query(lot_id)
-    elif fab_code == 'XMC':
+    elif fab_code == 'xmc':
         data = history_query1(lot_id)
 
     product_id = data['Current_Chip_Name'].unique()   # 提取出该Lot涉及的product信息
 
     # ---- 根据Lot所涉及到的product_id，查询涉及的stage顺序信息 ----
-    if fab_code == 'PSMC':
+    if fab_code == 'psmc':
         product_layers = layer_query(product_id)
-    elif fab_code == 'XMC':
+    elif fab_code == 'xmc':
         product_layers = layer_query1(product_id)
 
     # ---- 将layer生成不重复的list ----
@@ -76,9 +76,9 @@ def draw_history(lot_id, fab_code):
     # ---- 根据product_layer信息生成wip信息 ----
     for product_layer in product_layer_list:
         # ---- 根据product_layer查找产品名称列表 ----
-        if fab_code == 'XMC':
+        if fab_code == 'psmc':
             product_list = product_layers['PSMC_Product_ID'].loc[product_layers['Product_Layer'] == product_layer].tolist()
-        elif fab_code == 'PSMC':
+        elif fab_code == 'xmc':
             product_list = product_layers['XMC_Product_ID'].loc[product_layers['Product_Layer'] == product_layer].tolist()
 
         re_data = data.loc[data['Current_Chip_Name'].isin(product_list)].copy()
@@ -147,6 +147,6 @@ def draw_history(lot_id, fab_code):
 
 
 if __name__ == '__main__':
-    selected_id = ['PB1986']    # PB1986
+    selected_id = ['PL7512']    # PB1986
     fab = 'xmc'
     draw_history(selected_id, fab)
