@@ -17,8 +17,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
-from Python_Work.gui_pyqt.mysqliteconfig import writeDB
-
+from Python_Work.gui_pyqt.mysqliteconfig import TempTable
 
 
 class WipTable(QWidget):
@@ -111,10 +110,16 @@ class WipTable(QWidget):
         if value == 'Daily WIP Check':
             """返回查询当前时间最新的Lot状态"""
             self.lot_df = DailyWipCheck(productid, productinfo['Fab'])
-            writeDB(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
-            self.model = QSqlTableModel()
-            self.model = PandasModel(self.lot_df)
-            self.TableWidget.setModel(self.model)
+            mytable = TempTable(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
+            self.TableWidget.setModel(mytable.model)
+            layout.addWidget(self.TableWidget)
+
+
+
+
+
+            # self.model = PandasModel(self.lot_df)
+            # self.TableWidget.setModel(self.model)
 
         elif value == 'Product Lot Check':
             """返回所有的Lot的信息最终状态(包含已经在WH的产品)"""
