@@ -80,8 +80,8 @@ def createrdmap(filename):
             if os.path.isfile(bmpName):
                 continue
             bmpSize = (cowct * (frlx + 4) + 6, rolct * (frly + 4) + 6)
-            reticalx = 3
-            reticaly = 6
+            reticalx = 2
+            reticaly = 3
             newImage = Image.new('RGBA', bmpSize, 'WhiteSmoke')
 
             for chipline, rdline in zip(chiplines, rdlines):
@@ -93,7 +93,7 @@ def createrdmap(filename):
                 topLeftY = bmpSize[1] - y * (frly + 4) - 3
                 newImage.paste(im, (topLeftX, topLeftY))
             for x in range(cowct+1):
-                if (x + 1) % reticalx == 1:   # 调整X方向的Retical
+                if x % reticalx == 1:   # 调整X方向的Retical
                     newImage.paste("red", (x * (frlx + 4), 0, x * (frlx + 4) + 2, bmpSize[1]))
             for y in range(rolct + 1):
                 if y % reticaly == 0:
@@ -104,5 +104,5 @@ def createrdmap(filename):
 
 
 if __name__ == '__main__':
-    path = r'Z:\TMP\mabin\PL7511 #21 #23\PL7511_23_CP1\CP_P_PL7511_23_1'
+    path = r'C:\Users\yinpeng\Desktop\WorkSpace\CP_P_PPB354.81_03_1'
     createrdmap(path)

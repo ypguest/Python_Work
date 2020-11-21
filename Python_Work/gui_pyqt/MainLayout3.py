@@ -17,7 +17,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from Python_Work.gui_pyqt.mysqlconfig import MySQL
-from Python_Work.gui_pyqt.mysqliteconfig import TempTable
+from Python_Work.gui_pyqt.mysqliteconfig import DataGrid
 
 
 class WipTable(QWidget):
@@ -44,7 +44,7 @@ class WipTable(QWidget):
         layout = QVBoxLayout()
 
         # --------------定义QtableView控件----------
-        self.TableWidget = QTableView()
+        self.TableWidget = DataGrid()
 
         # -------------设置Table的属性--------------
         # self.TableWidget.setEditTriggers(QAbstractItemView.DoubleClicked)   # 表格禁止编辑
@@ -110,13 +110,10 @@ class WipTable(QWidget):
         if value == 'Daily WIP Check':
             """返回查询当前时间最新的Lot状态"""
             self.lot_df = DailyWipCheck(productid, productinfo['Fab'])
-            mytable = TempTable(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
-            self.TableWidget.setModel(mytable.model)
-            layout.addWidget(self.TableWidget)
-
-
-
-
+            self.TableWidget.wirteData(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
+            self.TableWidget.setTableView()
+            # self.TableWidget.setModel(mytable.model)
+            # layout.addWidget(self.TableWidget)
 
             # self.model = PandasModel(self.lot_df)
             # self.TableWidget.setModel(self.model)
