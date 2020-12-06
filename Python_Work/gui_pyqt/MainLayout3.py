@@ -110,7 +110,7 @@ class WipTable(QWidget):
         if value == 'Daily WIP Check':
             """返回查询当前时间最新的Lot状态"""
             self.lot_df = DailyWipCheck(productid, productinfo['Fab'])
-            self.TableWidget.wirteData(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
+            self.TableWidget.writeData(self.lot_df)   # 将查询的结果写入sqlite数据库(tempdb)
             self.TableWidget.setTableView()
             # self.TableWidget.setModel(mytable.model)
             # layout.addWidget(self.TableWidget)

@@ -147,6 +147,6 @@ def draw_history(lot_id, fab_code):
 
 
 if __name__ == '__main__':
-    selected_id = ['PPE220']    # PB1986
+    selected_id = ['PB1986']    # PB1986
     fab = 'xmc'
     draw_history(selected_id, fab)
