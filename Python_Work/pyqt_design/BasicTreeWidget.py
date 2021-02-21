@@ -52,7 +52,9 @@ class BasicTreeWidget(QMainWindow):
 
         self.setCentralWidget(self.tree)    # 将树控件作为中心控件, 即充满整个屏幕
 
+        self.createPopupMenu()
 
+QProgressBar
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     main = BasicTreeWidget()

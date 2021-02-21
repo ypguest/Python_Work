@@ -6,9 +6,7 @@
 """
 
 import os
-import re
 import pandas as pd
-import numpy as np
 import pymysql
 from sqlalchemy import create_engine
 
@@ -25,7 +23,7 @@ class MySQL(object):
         self.password = password
         self.charset = charset
         self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
-        self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
+        self.engine = create_engine('mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset))
 
 
 def DirFolder(file_path):

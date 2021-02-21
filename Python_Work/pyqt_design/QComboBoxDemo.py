@@ -9,6 +9,7 @@ class ComboBoxDemo(QWidget):
         super(ComboBoxDemo, self).__init__()
         self.initUI()
 
+    QAbstractItemView
     def initUI(self):
         self.setWindowTitle("Combo 例子")
         self.resize(300, 90)

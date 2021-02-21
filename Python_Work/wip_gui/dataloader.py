@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import time
-from Python_Work.wip_gui.PsmcLotLoader import PsmcLotLoader
+from Python_Work.wip_gui.psmclotloader import PsmcLotLoader
 
 
-# --------------------------函数设置---------------------------------
-# --------------------------------------------------------------------
+# ---- 函数设置 ----
+# -----------------
 
 
 def main1():

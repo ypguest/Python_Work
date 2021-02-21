@@ -34,7 +34,7 @@ class MySQL(object):
 # --------------------------------------------------------------------
 def RepeatWaferCheck():
     """将MLot按子批拉出来，将Current_Time小的Lot的分批Wafer的ID从后面有的Wafer中减去"""
-    mysql = MySQL(database='testdb')
+    mysql = MySQL()
     sql_config = mysql.sql_config
     connection = pymysql.connect(**sql_config)
     with connection.cursor() as cursor:
@@ -78,7 +78,7 @@ def RepeatWaferCheck():
 
 def RepeatLotCheck(Item):
     """如果录入的Lot_Id.dataframe()与数据库中已经存在的Lot_Id，则将数据库中的该Lot信息调出，通过判断这个Lot的Current_Time确认是否需要更新"""
-    mysql = MySQL(database='testdb')
+    mysql = MySQL()
     sql_config = mysql.sql_config
     connection = pymysql.connect(**sql_config)
     with connection.cursor() as cursor:
@@ -107,7 +107,7 @@ def RepeatLotCheck(Item):
 
 def MysqlUpdate(dictdata):
     """更新数据库中Lot的最新信息"""
-    mysql = MySQL(database='testdb')
+    mysql = MySQL()
     sql_config = mysql.sql_config
     connection = pymysql.connect(**sql_config)
     Lot_ID = dictdata['Lot_ID']
@@ -178,32 +178,32 @@ def DirFolder(_file_path):
     return _file_paths
 
 
-# ---------------------------------主程序1----------------------------------
-# -------------------------------------------------------------------------
+# ---- 主程序1----
+# ---------------
 def xmcLotLoader(data_paths):
     """遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库, 生成xmc的wip tracing table """
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
 
-    mysql = MySQL(database='testdb')
+    mysql = MySQL()
     myconnect = mysql.engine
     rename = {'Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Product ID': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Sche. Date': 'Forecast_Date', 'QTY': 'Qty', 'WAFER_ID': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
 
-    # ----------------确认路径中的不重复文件，并返回文件名的list--------------------------------
+    # ---- 确认路径中的不重复文件，并返回文件名的list----
     file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
 
-    # ------------遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径-----------------
+    # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
     for file_path in file_paths:
         loadtowip = pd.DataFrame()
-        # --------通过读取excel获取Current_Time(使用Try是有些文件打不开)-----------------------------------
+        # ---- 通过读取excel获取Current_Time(使用Try是有些文件打不开) ----
         try:
             datas = pd.read_csv(file_path)
         except AttributeError:
             continue
-        # -------------------按表的列名进行重命名，并按要求进行列排序----------------
+        # ---- 按表的列名进行重命名，并按要求进行列排序 ----
         time = os.path.split(file_path)[-1].split('_')[-1].split('.')[0]
-        # -------------------将Lot ID转化为9位----------------------------------
+        # ---- 将Lot ID转化为9位 ----
         for k, v in datas['Lot ID'].items():
             v = v.split('.')
             if len(v) == 1:
@@ -228,12 +228,12 @@ def xmcLotLoader(data_paths):
                 pd.io.sql.to_sql(ser_total, 'xmc_lot_tracing_table', con=myconnect, schema='testdb', if_exists='append', index=False)
             except Exception:      # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
                 RepeatLotCheck(ser_total)
-        # --------------更新psmc_wip_tracing_table--------------------------
+        # ---- 更新psmc_wip_tracing_table ----
         try:
             pd.io.sql.to_sql(loadtowip, 'xmc_wip_tracing_table', con=mysql.engine, if_exists='append', index=False)
         except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
             pass
-        # ------------------将上传的文件更新至psmwiploader中
+        # ---- 将上传的文件更新至psmwiploader中 ----
         _, filename = os.path.split(file_path)
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         try:
