@@ -14,6 +14,9 @@ import pandas as pd
 import numpy as np
 import pymysql
 
+pd.set_option('display.max_columns', None)   # 显示不省略行
+pd.set_option('display.max_rows', None)      # 显示不省略列
+pd.set_option('display.width', None)         # 显示不换行
 
 # --------------------------数据库设置---------------------------------
 # --------------------------------------------------------------------
@@ -139,6 +142,8 @@ def DataToWafer(data):
     if data is not None and data is not np.nan:
         data = data.split('.')
         for i in data:
+            if len(i) < 2:
+                i = '0' + i
             serdatas['#' + i] = 1
     return serdatas
 
@@ -195,6 +200,7 @@ def xmcLotLoader(data_paths):
 
     # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
     for file_path in file_paths:
+        print(file_path)
         loadtowip = pd.DataFrame()
         # ---- 通过读取excel获取Current_Time(使用Try是有些文件打不开) ----
         try:
@@ -214,7 +220,9 @@ def xmcLotLoader(data_paths):
             datas.loc[k, 'Lot ID'] = v
         datas['MLot ID'] = datas['Lot ID'].str[:6]
         datas['Fab'] = 'P10'
+        datas.Stage.fillna('', inplace=True)
         datas['Layer'] = datas.Stage.apply(lambda x: x.split('-')[0])
+
         datas['Current Time'] = time[0:4] + '/' + time[4:6] + '/' + time[6:8] + ' ' + time[8:10] + ':' + time[10:12] + ':' + time[12:14]
         datas.rename(columns=rename, inplace=True)
         datas = datas[order]
