@@ -27,27 +27,8 @@ class WatData(object):
     def __init__(self, path, datatype):
         """读取路径下的wat数据，并返回数据内容，类型，保存路径等信息"""
 
-        data_name = "Donghu_SEDS2_3DIC_WAT_Tracking_Table.xlsx"
+        data_name = "256MLPDDR2_WAT_Tracking_Table_20210420.xlsm"
         data_path = os.path.join(path, data_name)
-
-        # ---- 定义选择数据 ----
-        if datatype == "XMC":
-
-            spec = "xmc_spec"
-            rawdata = "xmc_raw_data"
-            # ---- 读取excel表中的rawdata ----
-            rawdata_df = pd.read_excel(data_path, sheet_name=rawdata, header=0, index_col=0)
-            rawdata_df["Test_Time"] = rawdata_df["Test_Time"].apply(lambda x: datetime.strptime(str(x), "%Y%m%d%H%M%S"))  # 时间转换
-            wat_items = list(rawdata_df)[6:]
-            left1 = rawdata_df.groupby('Lot_Wafer')['Test_Time'].max()
-            right1 = rawdata_df.groupby('Lot_Wafer')[wat_items].mean()
-            rawdata_df = pd.merge(left1, right1, right_on='Lot_Wafer', left_index=True, how='outer')
-            rawdata_df.sort_values(by=["Test_Time", "Lot_Wafer"], ascending=[True, True], inplace=True)  # 调整数据顺序
-
-            self.save_path = os.path.join(path, 'wat_image', 'xmc')   # 图片保存的路径
-            self.wat_type = 'Logic'     # 数据类型属性
-            self.rawdata_df = rawdata_df      # 数据
-            self.spec_df = pd.read_excel(data_path, sheet_name=spec, header=0, index_col=0)    # 规格
 
         if datatype == "PSMC":
 
@@ -55,12 +36,8 @@ class WatData(object):
             rawdata = "psmc_raw_data"
             # ---- 读取excel表中的rawdata ----
             rawdata_df = pd.read_excel(data_path, sheet_name=rawdata, header=0, index_col=0)
+
             rawdata_df["Test_Time"] = rawdata_df["Test_Time"].apply(lambda x: datetime.strptime(str(x), "%Y-%m-%d %H:%M:%S"))  # 时间转换
-            wat_items = list(rawdata_df)[6:]
-            left1 = rawdata_df.groupby('Lot_Wafer')['Test_Time'].max()
-            right1 = rawdata_df.groupby('Lot_Wafer')[wat_items].mean()
-            rawdata_df = pd.merge(left1, right1, right_on='Lot_Wafer', left_index=True, how='outer')
-            rawdata_df.sort_values(by=["Test_Time", "Lot_Wafer"], ascending=[True, True], inplace=True)  # 调整数据顺序
 
             self.save_path = os.path.join(path, 'wat_image', 'psmc')
             self.wat_type = 'DRAM'
@@ -71,7 +48,6 @@ class WatData(object):
         """按时间顺序对wat的数据画trend"""
 
         wat_items = self.spec_df.index.values  # 获取测试项目
-
         for wat_item in wat_items:
 
             # ---- 定义变量 ----
@@ -83,8 +59,9 @@ class WatData(object):
             plt.subplots_adjust(left=0.1, top=0.9, bottom=0.3, right=0.9)  # 调整图片位置
 
             # ---- 按测试项提取参数 ----
-            value = self.rawdata_df[wat_item].tolist()    # Y值
-            lotid = self.rawdata_df.index.values     # X值
+
+            value = self.rawdata_df[itemname].tolist()    # Y值
+            lotid = self.rawdata_df['LOT_Wafer'].tolist()     # X值
             Spec_Low = self.spec_df.loc[wat_item][0]
             Spec_Target = self.spec_df.loc[wat_item][1]
             Spec_High = self.spec_df.loc[wat_item][2]
@@ -102,7 +79,7 @@ class WatData(object):
 
             # ---- 坐标轴设置 ----
 
-            ax.set_title("SEDS2 %s WAT (%s) Trend" % (self.wat_type, itemname))
+            ax.set_title("XiaoMan %s WAT (%s) Trend" % (self.wat_type, itemname))
             ax.set_xlabel('Lot_ID', fontsize=10)    # x标签设置
             ax.set_ylabel(wat_item, fontsize=10)        # y标签设置
             ax.set_ylim(DrawLOL, DrawHIL)           # y轴最大，最小值设置
@@ -168,10 +145,10 @@ def dir_folder(file_path):
 
 
 if __name__ == '__main__':
-    path = r"Z:\QRE\00_Production_Public\Donghu\Donghu-SEDS2\17 Quality_control\02 WAT\wat_report"
-    watdata = WatData(path=path, datatype="XMC")
-    watdata.DrawTrend()
-    PasteToPPT(path=path, datatype="XMC")
+    path = r"C:\Users\yinpeng\Desktop\wat_report"
+    # watdata = WatData(path=path, datatype="XMC")
+    # # watdata.DrawTrend()
+    # PasteToPPT(path=path, datatype="XMC")
     watdata = WatData(path=path, datatype="PSMC")
     watdata.DrawTrend()
     PasteToPPT(path=path, datatype="PSMC")

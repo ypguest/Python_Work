@@ -193,6 +193,7 @@ def xmcLotLoader(data_paths):
     myconnect = mysql.engine
     rename = {'Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Product ID': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Sche. Date': 'Forecast_Date', 'QTY': 'Qty', 'WAFER_ID': 'Wafer_No'}
+
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
 
     # ---- 确认路径中的不重复文件，并返回文件名的list----
@@ -200,7 +201,6 @@ def xmcLotLoader(data_paths):
 
     # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
     for file_path in file_paths:
-        print(file_path)
         loadtowip = pd.DataFrame()
         # ---- 通过读取excel获取Current_Time(使用Try是有些文件打不开) ----
         try:

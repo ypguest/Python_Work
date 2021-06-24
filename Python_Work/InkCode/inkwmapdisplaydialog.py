@@ -9,7 +9,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Python_Work.InkCode.inkwmapdisplayframe import Ui_Dialog
-QDir
 
 class InkWmapDisplayDialog(Ui_Dialog):
 

@@ -78,6 +78,7 @@ def TjsTestYieldLoader():
     # Todo 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径
     data_paths = [file_path + '\\' + i for i in FileRepeatChk(file_path)]
 
+
     for data_path in data_paths:
         # todo 将bi及ft测试数据上传至tjs_bi_testing_yield_report & tjs_ft_testing_yield_report数据库
         datas_bi = pd.read_excel(data_path, sheet_name='BI', header=0)

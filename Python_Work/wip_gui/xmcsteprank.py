@@ -9,7 +9,7 @@
 """
 
 import pandas as pd
-from Python_Work.gui_pyqt.mysqlconfig import MySQL
+from Python_Work.Qtgui.mysqlconfig import MySQL
 
 # pd设置
 pd.set_option('display.max_columns', None)   # 显示不省略行
