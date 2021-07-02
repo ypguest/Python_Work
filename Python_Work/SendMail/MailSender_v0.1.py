@@ -77,7 +77,9 @@ def main():
     # 调用函数，这里的密码使用生成的密码；
     # receivers = ['peng.yin@unisemicon.com']
     receivers = ['peng.yin@unisemicon.com', 'gordon.ding@unisemicon.com', 'bin.ma@unisemicon.com', 'shuyuan.ma@unisemicon.com',
-                 'xing.guo@unisemicon.com', 'xiaowei.zhu@unisemicon.com', 'qian.wang@unisemicon.com', 'kai.zhang@unisemicon.com']
+                 'xing.guo@unisemicon.com', 'xiaowei.zhu@unisemicon.com', 'qian.wang@unisemicon.com', 'kai.zhang@unisemicon.com'
+                 'chunjuan.wang@unisemicon.com', 'hua.huang@unisemicon.com', 'yonghua.chen@unisemicon.com', 'shaoting.he@unisemicon.com', 'hui.wang3@unisemicon.com',
+                 'yubing.wang@unisemicon.com', 'song.wang@unisemicon.com']
     sendMail(sender="qre.public@unisemicon.com", mail_pwd="yp0*963", receivers=receivers, mail_msg=mail_msg, mail_host="smtp.263.net")
 
 
