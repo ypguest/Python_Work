@@ -2,10 +2,30 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="db7da319-a351-4183-86d5-22bcc7deb2b0" name="Default Changelist" comment="update">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Python_Work/GuiScrip/db/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/Python_Work/GuiScrip/db/database.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Python_Work/SendMail/MailSender_v0.1.py" beforeDir="false" afterPath="$PROJECT_DIR$/Python_Work/SendMail/MailSender_v0.1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/Analysis-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/EXE-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/PKG-00.pkg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/PKG-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/PYZ-00.pyz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/PYZ-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/Tree-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/Tree-01.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/base_library.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/draw_wat.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/warn-draw_wat.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/build/draw_wat/xref-draw_wat.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/package_work/dist/draw_wat.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/PsmcLotLoader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/backup/GenLotWafer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/backup/PsmcWipQuery.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/dataloader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/psmcsteprank.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/tjsTestYieldLoader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/tjsWipLoader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/tjsWoLoader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/xmcLotLoader.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python_Work/wip_gui/xmcsteprank.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,13 +228,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1591752792942</updated>
-    </task>
-    <task id="LOCAL-00010" summary="update">
-      <created>1591781391322</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1591781391322</updated>
     </task>
     <task id="LOCAL-00011" summary="update">
       <created>1591783886927</created>
@@ -552,7 +565,14 @@
       <option name="project" value="LOCAL" />
       <updated>1624583901170</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="update">
+      <created>1625194061219</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1625194061220</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
