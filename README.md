@@ -1,0 +1,7 @@
+PyQt5常用模块
+QtCore：提供核心的非GUI功能的类，包含QFile，QDir，QTimer等非界面组件类；
+QtGui：提供GUI设计中用于窗口系统集成，事件处理，绘图等功能的类，包含QIcon，Qfont，Qpixmap，QCloseEvent，QPalette，QPainter等GUI底层实现类；
+QtWidgets：提供GUI设计中所有窗体显示的类，包含各种窗体，标准对话框，按钮，文本框等组件，包含QMainWindow，QWidget，QDiglog等窗口，QColorDialog，QFileDialog等标准对话框，QRadioButton，QSpinBox，QMenu等界面组件；
+QtMultimedia：提供音频，视频，摄像头操作的类，包含QCamera，QAudioInput，QMediaPlayer等
+QtMultimeidaWidget：提供多媒体窗体显示的类，包含QCameraViewfinder，QVideoWidget等
+QtSql：提供SQL数据库驱动，数据查询和操作的类，包含QSqlDatabase，QSqlQuery，QSqlRecord等；
