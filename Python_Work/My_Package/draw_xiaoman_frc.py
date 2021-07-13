@@ -1,10 +1,19 @@
-"""针对Xiaoman(512M_F25)产品的特性(Retical)，绘制FRC map"""
+# ///////////////////////////////////////////////////////////////
+#
+# BY: Jason Yin
+# 针对Xiaoman(512M_F25)产品的特性(Retical)，绘制FRC map
+# V: 1.0.0
+#
+# ///////////////////////////////////////////////////////////////
+
+# !/usr/bin/python
+# -*- coding: utf-8 -*-
 
 
 import os
 import struct
 import re
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def create_bmp_from_str(w, h, tarstr, bmpName):
@@ -88,21 +97,22 @@ def createrdmap(filename):
                 x = int(chipline[3:6])
                 y = int(chipline[6:9])
                 create_bmp_from_str(frlx, frly, rdline[3:], "tmp.bmp")
-                im = Image.open("tmp.bmp")
+                im0 = Image.open("tmp.bmp")
+                im = ImageOps.mirror(im0)
                 topLeftX = (x - 1) * (frlx + 4) + 3
                 topLeftY = bmpSize[1] - y * (frly + 4) - 3
                 newImage.paste(im, (topLeftX, topLeftY))
-            # for x in range(cowct+1):
-            #     if (x + 2) % reticalx == 1:   # 调整X方向的Retical
-            #         newImage.paste("red", (x * (frlx + 4), 0, x * (frlx + 4) + 2, bmpSize[1]))
-            # for y in range(rolct + 1):
-            #     if y % reticaly == 0:
-            #         newImage.paste("red", (0, y * (frly + 4), bmpSize[0], y * (frly + 4) + 2))
+            for x in range(cowct+1):
+                if (x + 2) % reticalx == 2:   # 调整X方向的Retical
+                    newImage.paste("red", (x * (frlx + 4), 0, x * (frlx + 4) + 2, bmpSize[1]))
+            for y in range(rolct+1):
+                if y % reticaly == 6:   # 调整Y方向的Retical
+                    newImage.paste("red", (0, y * (frly + 4), bmpSize[0], y * (frly + 4) + 2))
             if fnloc == 0:
                 newImage = newImage.rotate(180)
             newImage.save(bmpName, 'PNG')
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\yinpeng\Desktop\WorkSpace\data\CP_P_MPJ319005_09_2_202106190007'
+    path = r'C:\Users\yinpeng\Desktop\WorkSpace\TestData\CP_P_MPJ939680_14_1'
     createrdmap(path)

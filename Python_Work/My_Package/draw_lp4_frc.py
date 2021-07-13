@@ -4,7 +4,7 @@
 import os
 import struct
 import re
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def create_bmp_from_str(w, h, tarstr, bmpName):
@@ -88,7 +88,8 @@ def createrdmap(filename):
                 x = int(chipline[3:5])
                 y = int(chipline[5:7])
                 create_bmp_from_str(frlx, frly, rdline[3:], "tmp.bmp")
-                im = Image.open("tmp.bmp")
+                im0 = Image.open("tmp.bmp")
+                im = ImageOps.mirror(im0)
                 topLeftX = (x - 1) * (frlx + 4) + 3
                 topLeftY = bmpSize[1] - y * (frly + 4) - 3
                 newImage.paste(im, (topLeftX, topLeftY))

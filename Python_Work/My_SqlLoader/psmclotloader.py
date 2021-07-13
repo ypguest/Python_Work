@@ -8,8 +8,10 @@
 3. 如果该Lot为分批Lot, 则在后续merge后Wafer Count为0， 故需要对当前Wafer No进行更新;
 """
 
+# 导入标准库
 import os
 import datetime
+# 导入第三方库
 import pandas as pd
 import numpy as np
 import pymysql
@@ -21,8 +23,8 @@ pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
 
-# ---- 数据库设置 ----
-# -------------------
+# 数据库类定义
+# ///////////////////////////////////////////////////////////////
 class MySQL(object):
     def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
         """实例化后自动连接至数据库"""
@@ -36,8 +38,8 @@ class MySQL(object):
         self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
 
 
-# ---- 函数设置 ----
-# -----------------
+# 相关函数定义
+# ///////////////////////////////////////////////////////////////
 def RepeatWaferCheck():
     """将Lot按子批拉出来，将前面分批的Wafer的ID从后面有的Wafer中减去"""
     mysql = MySQL()
@@ -58,7 +60,8 @@ def RepeatWaferCheck():
     df.drop_duplicates(subset=['Lot_ID'], keep='first', inplace=True)          # 将dataframe中Lot_id相同的数据，只保留第一次的
     list_mlot = list(df['MLot_ID'].drop_duplicates())                          # 提取出所有数据中唯一的MLOT_ID
 
-    # ---- 根据Mother lot id对数据进行遍历，并根据遍历过程中Wafer No为1的数据，读出Wafer No, 并将Lot Wafer信息进行写入psmc_lot_wafer数据库中 ----
+    # 根据Mother lot id对数据进行遍历，并根据遍历过程中Wafer No为1的数据，读出Wafer No, 并将Lot Wafer信息进行写入psmc_lot_wafer数据库中
+    # ///////////////////////////////////////////////////////////////
     for mlot in list_mlot:
         data = df[df.loc[:, 'MLot_ID'] == mlot].copy()  # 按lot生成data数据,包含（MLot_ID，Lot_ID，Current_Chip_Name，Current_Time，Wafer信息）
         if data.shape[0] > 1:
@@ -67,7 +70,7 @@ def RepeatWaferCheck():
             for index, row in data.iteritems():
                 if row.name in ['#01', '#02', '#03', '#04', '#05', '#06', '#07', '#08', '#09', '#10',
                                 '#11', '#12', '#13', '#14', '#15', '#16', '#17', '#18', '#19', '#20', '#21', '#22', '#23', '#24', '#25']:
-                    # todo 按#01,#02 ....#25 Wafer进行重复性确认，如果重复赋值为None
+                    # 按#01,#02 ....#25 Wafer进行重复性确认，如果重复赋值为None
 
                     for i in range(len(row.values)):
                         if row.values[i] == 1:

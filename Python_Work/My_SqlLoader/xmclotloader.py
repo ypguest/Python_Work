@@ -185,7 +185,7 @@ def DirFolder(_file_path):
 
 # ---- 主程序1----
 # ---------------
-def xmcLotLoader(data_paths):
+def XmcLotLoader(data_paths):
     """遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库, 生成xmc的wip tracing table """
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
 
@@ -253,6 +253,6 @@ def xmcLotLoader(data_paths):
 
 if __name__ == "__main__":
     path = r'C:\Users\yinpeng\Desktop\wip'
-    xmcLotLoader(path)
+    XmcLotLoader(path)
 
 
