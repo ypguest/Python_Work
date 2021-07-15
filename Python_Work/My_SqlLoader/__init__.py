@@ -4,6 +4,6 @@
 # @Time:2021/7/13 17:15
 # @Author:Jason_Yin
 
-
-from .psmclotloader import *
-from .xsmclotloader import *
+#
+import psmcwiploader
+import xmcwiploader

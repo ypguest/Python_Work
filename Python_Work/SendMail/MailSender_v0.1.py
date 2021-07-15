@@ -65,7 +65,7 @@ def sendMail(sender, mail_pwd, receivers, mail_msg, mail_host):
 
 
 def main():
-    link = r"\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\CP_Map_Report\7.13Daily_Report_Map_Gallery.html"
+    link = r"\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\CP_Map_Report\7.14Daily_Report_Map_Gallery.html"
     # 定义邮件内容
     text = """
     <p>Hi All, </p>
@@ -76,10 +76,11 @@ def main():
     table = gentable()   # 产生HTML文件
 
     text2 = """<br/>
-    <p>You can check the detail map at below link</p>
-    <p><a href={}>Detail Map Link</a></p>
+    <p>You can also check the detail map at below link</p>
+    <p><a href={}><font size="5" color="red"> * Detail Map Link *</font></a></p>
     """.format(link)
-    mail_msg = text + table +text2
+
+    mail_msg = text + table + text2
     # 调用函数，这里的密码使用生成的密码；
     # receivers = ['peng.yin@unisemicon.com']
     receivers = ['peng.yin@unisemicon.com', 'gordon.ding@unisemicon.com', 'bin.ma@unisemicon.com', 'shuyuan.ma@unisemicon.com',

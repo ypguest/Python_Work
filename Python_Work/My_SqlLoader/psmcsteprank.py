@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""查询psmc wip数据库，并将Setp按工艺顺序提取出来"""
-"""
+"""查询psmc wip数据库，并将Setp按工艺顺序提取出来
 # 1. 将Lot ID提取出来;
 # 2. 将Setp 按照Lot IDt提取出来并按时间排序;
 # 3. 将两个序列按顺序进行插叙排列

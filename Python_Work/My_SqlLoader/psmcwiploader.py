@@ -1,16 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# 导入标准库
+
 """
 用于更新当前Lot状态
-1. 按Wafer Start Time/Lot Id排序;
-2. 对于数据库不存在的Lot id,更新Lot ID. 如果数据库存在Lot id更新，则更新当前Layer, Wafer No;
-3. 如果该Lot为分批Lot, 则在后续merge后Wafer Count为0， 故需要对当前Wafer No进行更新;
+# 1. 按Wafer Start Time/Lot Id排序;
+# 2. 对于数据库不存在的Lot id,更新Lot ID. 如果数据库存在Lot id更新，则更新当前Layer, Wafer No;
+# 3. 如果该Lot为分批Lot, 则在后续merge后Wafer Count为0， 故需要对当前Wafer No进行更新;
 """
 
-# 导入标准库
 import os
 import datetime
+
 # 导入第三方库
 import pandas as pd
 import numpy as np
@@ -23,7 +25,7 @@ pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
 
-# 数据库类定义
+# 数据库链接类定义
 # ///////////////////////////////////////////////////////////////
 class MySQL(object):
     def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
@@ -193,23 +195,25 @@ def FileRepeatChk(_file_path):
     return _data_paths
 
 
-# ---- 主程序 ----
-# ---------------
+# main
+# ///////////////////////////////////////////////////////////////
 def PsmcLotLoader(data_paths):
-    """主脚本，主要用于将路径为file_path的Lot_ID数据上传至数据库"""
+    """主程序，主要用于将路径为file_path的Lot_ID数据上传至数据库"""
     pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
 
     # ---- 确认路径中的不重复文件，并返回文件名的list ----
     file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
     # ---- 数据库设置----
     mysql = MySQL()
+
     rename = {'Wafer Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Current Chip Name': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
+
     # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
     for file_path in file_paths:
         loadtowip = pd.DataFrame()
-        # ---- 通过读取excel获取Current_Time(使用Try是有些文件打不开) ----
+        # ---- 通过读取excel获取Current_Time(使用Try是由于有些文件打不开) ----
         try:
             workbook = xlrd.open_workbook(file_path, 'rb')
         except AttributeError:
@@ -258,4 +262,3 @@ def PsmcLotLoader(data_paths):
 if __name__ == "__main__":
     row_path = r'F:\08 Daily_Report\01_PTC_Wip'
     PsmcLotLoader(row_path)
-
