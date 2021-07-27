@@ -114,5 +114,5 @@ def createrdmap(filename):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\yinpeng\Desktop\WorkSpace\TestData\CP_P_MPJ939680_14_1'
+    path = r'C:\Users\yinpeng\Desktop\WorkSpace\TestData\CP_P_MPJ939680_14_2_202107150901'
     createrdmap(path)

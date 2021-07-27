@@ -95,6 +95,6 @@ def gentable(_data_path, _lot_infor):
 
 
 if __name__ == '__main__':
-    url_path = r"//arctis/qcxpub/QRE/04_QA(Component)/99_Daily_Report/99_QRE_CP_Yield_Report/CP_Map_Report/7.14Daily_Report_Map_Gallery.html"
-    data_path = r"//arctis/qcxpub/QRE/04_QA(Component)/99_Daily_Report/99_QRE_CP_Yield_Report/CP_Map_Report/7.14_LOT LIST.xlsx"
+    url_path = r"//arctis/qcxpub/QRE/04_QA(Component)/99_Daily_Report/99_QRE_CP_Yield_Report/CP_Map_Report/7.27Daily_Report_Map_Gallery.html"
+    data_path = r"//arctis/qcxpub/QRE/04_QA(Component)/99_Daily_Report/99_QRE_CP_Yield_Report/CP_Map_Report/7.27_LOT LIST.xlsx"
     cover_html_file(url_path, data_path)

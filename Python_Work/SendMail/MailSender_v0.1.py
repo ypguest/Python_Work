@@ -65,7 +65,7 @@ def sendMail(sender, mail_pwd, receivers, mail_msg, mail_host):
 
 
 def main():
-    link = r"\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\CP_Map_Report\7.14Daily_Report_Map_Gallery.html"
+    link = r"\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\CP_Map_Report\7.27Daily_Report_Map_Gallery.html"
     # 定义邮件内容
     text = """
     <p>Hi All, </p>
@@ -86,7 +86,7 @@ def main():
     receivers = ['peng.yin@unisemicon.com', 'gordon.ding@unisemicon.com', 'bin.ma@unisemicon.com', 'shuyuan.ma@unisemicon.com',
                  'xing.guo@unisemicon.com', 'xiaowei.zhu@unisemicon.com', 'qian.wang@unisemicon.com', 'kai.zhang@unisemicon.com',
                  'chunjuan.wang@unisemicon.com', 'hua.huang@unisemicon.com', 'yonghua.chen@unisemicon.com', 'shaoting.he@unisemicon.com', 'hui.wang3@unisemicon.com',
-                 'yubing.wang@unisemicon.com', 'song.wang@unisemicon.com', 'ziyue.tang@unisemicon.com', 'xudong.gao@unisemicon.com']
+                 'yubing.wang@unisemicon.com', 'song.wang@unisemicon.com', 'ziyue.tang@unisemicon.com', 'xudong.gao@unisemicon.com', 'guowei.zhang@unisemicon.com']
     sendMail(sender="qre.public@unisemicon.com", mail_pwd="yp0*963", receivers=receivers, mail_msg=mail_msg, mail_host="smtp.263.net")
 
 
