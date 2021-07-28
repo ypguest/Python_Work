@@ -24,7 +24,17 @@ class MySQL(object):
         self.user = user
         self.password = password
         self.charset = charset
-        # ==== 连接mysql ====
+
+        self.confgdb = 'configdb'
+        self.loaderdb = 'loader'
+        self.testdb = 'testdb'
+
+        self.testdb_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.testdb, 'charset': self.charset}
+
+        self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.loaderdb, self.charset)
+        self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.testdb, self.charset)
+
+    # ==== 连接mysql ====
         try:
             self.conn = mysql.connect(host=self.host, port=self.port, user=self.user, passwd=self.password)
             self.cur = self.conn.cursor()

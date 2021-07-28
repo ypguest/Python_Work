@@ -125,6 +125,7 @@ class QMapDataGridWip(QMainWindow):
                 mysql_layer.selectDb(database='product_layer')
                 desc_layer, result_layer = mysql_layer.sqlAll('SELECT * FROM {}_{}_layer'.format(self.fab.lower(), wip_type.lower()))
                 layer_infor = pd.DataFrame(result_layer, columns=desc_layer)
+
                 data_wip = pd.merge(data_wip, layer_infor, how='left', on='Stage')
                 grouped_data = data_wip.groupby(['Layer'])['Qty'].sum()
 

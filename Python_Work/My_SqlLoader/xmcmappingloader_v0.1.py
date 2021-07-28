@@ -74,8 +74,8 @@ def FileRepeatChk(_file_path):
     return _data_paths
 
 
-def mappingloader(_file_path):
-
+def mappingloader():
+    _file_path = r'\\arctis\PRODUCTION\WAT\XMC\ftp.ymtc.com\Unilot\MAPPING'
     # ---- 确认路径中的不重复文件，并返回文件名的list ----
     file_paths = [_file_path + '\\' + i for i in FileRepeatChk(_file_path)]
     # ---- 数据库设置----
@@ -126,6 +126,5 @@ def mappingloader(_file_path):
 
 
 if __name__ == "__main__":
-    path = r'\\arctis\PRODUCTION\WAT\XMC\ftp.ymtc.com\Unilot\MAPPING'
-    mappingloader(path)
+    mappingloader()
 

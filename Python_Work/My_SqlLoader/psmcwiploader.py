@@ -12,11 +12,12 @@
 
 import os
 import datetime
+from time import strftime, localtime
 
 # 导入第三方库
 import pandas as pd
 import numpy as np
-import pymysql
+import MySQLdb
 import xlrd
 
 # pd设置
@@ -28,52 +29,60 @@ pd.set_option('display.width', None)         # 显示不换行
 # 数据库链接类定义
 # ///////////////////////////////////////////////////////////////
 class MySQL(object):
-    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+    def __init__(self, host='localhost', user="root", password='yp*963.', port=3306, charset='utf8'):
         """实例化后自动连接至数据库"""
         self.host = host
-        self.database = database
         self.port = port
         self.user = user
         self.password = password
         self.charset = charset
-        self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
-        self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
+
+        self.confgdb = 'configdb'
+        self.loaderdb = 'loader'
+        self.testdb = 'testdb'
+
+        self.testdb_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.testdb, 'charset': self.charset}
+
+        self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.loaderdb, self.charset)
+        self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.testdb, self.charset)
 
 
 # 相关函数定义
 # ///////////////////////////////////////////////////////////////
 def RepeatWaferCheck():
-    """将Lot按子批拉出来，将前面分批的Wafer的ID从后面有的Wafer中减去"""
+    """将psmc_wip_tracing_table中的数据按MLot_ID拉出来，将前面分批的Wafer的ID从后面有的Wafer中减去"""
     mysql = MySQL()
-    connection = pymysql.connect(**mysql.sql_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
         cursor.execute("""
         SELECT DATE_FORMAT(`Wafer_Start_Date`,'%Y/%m/%d') AS `Wafer_Start_Date`, MLot_ID, Lot_ID, Current_Chip_Name, Fab, Layer, Stage, 
         DATE_FORMAT(`Current_Time`,'%Y/%m/%d %H:%i:%s') AS `Current_Time`, DATE_FORMAT(`Forecast_Date`, '%Y/%m/%d') AS `Forecast_Date`, Qty, 
         `#01`, `#02`, `#03`, `#04`, `#05`, `#06`, `#07`, `#08`, `#09`, `#10`, `#11`, `#12`, `#13`, `#14`, `#15`, `#16`, `#17`, `#18`, `#19`, `#20`, `#21`, `#22`, `#23`, `#24`, `#25` 
-        FROM psmc_lot_tracing_table
+        FROM psmc_wip_tracing_table
         """)
         sql_results = cursor.fetchall()
         columnDes = cursor.description
+        cursor.close()
         connection.close()
     columnNames = [columnDes[i][0] for i in range(len(columnDes))]             # 获取表头
     df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)     # 将从数据库中取出的元祖数据转换为dataframe
-    df.drop_duplicates(subset=['Lot_ID'], keep='first', inplace=True)          # 将dataframe中Lot_id相同的数据，只保留第一次的
+    df.sort_values(by="Current_Time", axis=0, ascending=True, inplace=True)    # 将dataframe按Current_Time升序排列
+    df.drop_duplicates(subset=['Lot_ID', 'Stage'], keep='first', inplace=True)          # 将dataframe中Lot_id相同的数据，只保留第一次的
+
     list_mlot = list(df['MLot_ID'].drop_duplicates())                          # 提取出所有数据中唯一的MLOT_ID
 
-    # 根据Mother lot id对数据进行遍历，并根据遍历过程中Wafer No为1的数据，读出Wafer No, 并将Lot Wafer信息进行写入psmc_lot_wafer数据库中
+    # 根据MLot_ID对数据进行遍历，并根据遍历过程中Wafer_No为1的数据，读出Wafer No
     # ///////////////////////////////////////////////////////////////
     for mlot in list_mlot:
-        data = df[df.loc[:, 'MLot_ID'] == mlot].copy()  # 按lot生成data数据,包含（MLot_ID，Lot_ID，Current_Chip_Name，Current_Time，Wafer信息）
+        data = df[df.loc[:, 'MLot_ID'] == mlot].copy()  # 按lot生成data数据,包含（MLot_ID，Lot_ID，Current_Chip_Name，Current_Time，Wafer_No信息）
         if data.shape[0] > 1:
-            data.sort_values(by='Current_Time', axis=0, ascending=False, inplace=True, na_position='first')
-            # ---遍历每一列，如果当列第一个为1，则后续不得为1
+            data.sort_values(by='Current_Time', axis=0, ascending=False, inplace=True)  # 将data数据按时间排序
+
+            # 遍历每一列，如果当列第一个为1，则后续不得为1
             for index, row in data.iteritems():
                 if row.name in ['#01', '#02', '#03', '#04', '#05', '#06', '#07', '#08', '#09', '#10',
                                 '#11', '#12', '#13', '#14', '#15', '#16', '#17', '#18', '#19', '#20', '#21', '#22', '#23', '#24', '#25']:
-                    # 按#01,#02 ....#25 Wafer进行重复性确认，如果重复赋值为None
-
+                    # 按#01,#02 ....#25 Wafer进行重复性确认，如果重复则赋值为None
                     for i in range(len(row.values)):
                         if row.values[i] == 1:
                             row.values[i + 1:] = None
@@ -82,16 +91,19 @@ def RepeatWaferCheck():
                 data['Qty'] = temp.sum(axis=1, skipna=np.nan)
         else:
             pass
+        # 将Wafer No数据按新的状态进行更新
         for row in data.iterrows():
             Item = row[1].where(row[1].notnull(), 'Null')  # 将nan 转变为Null
             dictdata = Item.to_dict()
+            print(dictdata)
             MysqlUpdate(dictdata)
 
 
 def MysqlUpdate(_dictdata):
-    """更新数据库中Lot的最新信息"""
-    mysql = MySQL(database='testdb', password='yp*963.')
-    connection = pymysql.connect(**mysql.sql_config)
+    """
+    将psmc_wip_tracing_table中按Lot提取的最新信息更新至psmc_lot_tracing_table
+    """
+    # todo 当前需要更新整个数据库，如何提高效率？
     Lot_ID = _dictdata['Lot_ID']
     dictstr = _dictdata.copy()
     dictfloat = _dictdata.copy()
@@ -102,8 +114,10 @@ def MysqlUpdate(_dictdata):
         dictfloat['Forecast_Date']
     sql = "UPDATE psmc_lot_tracing_table SET {}, {} WHERE Lot_ID = '{}'".format((','.join("`{}` = '{}'".format(k, v) for k, v in dictstr.items())),
                                                                                 (','.join("`{}` = {}".format(k, v) for k, v in dictfloat.items())), Lot_ID)
+
+    mysql = MySQL()
+    connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
         try:  # 将Wafer信息更新至数据库
             cursor.execute(sql)
         except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
@@ -127,7 +141,7 @@ def DataToWafer(_data):
 def RepeatLotCheck(_item):
     """如果录入的dataframe.Lot_Id与数据库中已经存在的Lot_Id，则将数据库中的该Lot信息调出，通过判断这个Lot的Current_Time确认是否需要更新"""
     mysql = MySQL()
-    connection = pymysql.connect(**mysql.sql_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
         cursor.execute("""
@@ -174,10 +188,10 @@ def DirFolder(_file_path):
 def FileRepeatChk(_file_path):
     """判断每天需要upload的文件"""
     mysql = MySQL()
-    connection = pymysql.connect(**mysql.sql_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     try:
         with connection.cursor() as cursor:
-            cursor.execute('USE configdb;')
+            cursor.execute('USE loader;')
             cursor.execute('SELECT filename FROM psmcwiploader')
             result = cursor.fetchall()
     finally:
@@ -197,31 +211,28 @@ def FileRepeatChk(_file_path):
 
 # main
 # ///////////////////////////////////////////////////////////////
-def PsmcLotLoader(data_paths):
-    """主程序，主要用于将路径为file_path的Lot_ID数据上传至数据库"""
-    pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
-
+def PsmcLotLoader():
+    """
+    主程序，主要用于将路径为file_path的Lot_ID数据上传至数据库
+    """
+    data_paths = r'\\arctis\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
     # ---- 确认路径中的不重复文件，并返回文件名的list ----
     file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
-    # ---- 数据库设置----
-    mysql = MySQL()
-
     rename = {'Wafer Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Current Chip Name': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
-
+    # ---- 数据库设置----
+    mysql = MySQL()
     # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
     for file_path in file_paths:
         loadtowip = pd.DataFrame()
-        # ---- 通过读取excel获取Current_Time(使用Try是由于有些文件打不开) ----
-        try:
+        try:  # 读取excel中的Current_Time(使用Try是由于有些文件打不开)
             workbook = xlrd.open_workbook(file_path, 'rb')
         except AttributeError:
-            continue
+            pass
         table = workbook.sheet_by_name('ALL')
         Current_Time = table.cell_value(0, 0)
-        # ---- 读取excel中的wip信息 ----
-        datas = pd.read_excel(file_path, sheet_name='ALL', skiprows=3, header=0)
+        datas = pd.read_excel(file_path, sheet_name='ALL', skiprows=3, header=0)        # 读取excel中的wip信息
         datas['MLot ID'] = datas['Lot ID'].str[:6]
         # ---- 处理无Wafer No的WIP文件 ----
         try:
@@ -239,26 +250,25 @@ def PsmcLotLoader(data_paths):
             ser_total = pd.DataFrame(pd.concat([row[:-1], wafer_no])).T  # 生成单个的wip数据
             # ---- 更新psmc_lot_tracing_table ----
             try:  # 将Wafer信息更新至数据库
-                pd.io.sql.to_sql(ser_total, 'psmc_lot_tracing_table', con=mysql.engine, if_exists='append', index=False)
+                pd.io.sql.to_sql(ser_total, 'psmc_lot_tracing_table', con=mysql.testdbengine, if_exists='append', index=False)
             except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
                 RepeatLotCheck(ser_total)
             # ---- 生成loadtowip 的dataframe用于整体录入数据 ----
             loadtowip = loadtowip.append(ser_total)
         # --- 更新psmc_wip_tracing_table ----
         try:
-            pd.io.sql.to_sql(loadtowip, 'psmc_wip_tracing_table', con=mysql.engine, if_exists='append', index=False)
+            pd.io.sql.to_sql(loadtowip, 'psmc_wip_tracing_table', con=mysql.testdbengine, if_exists='append', index=False)
         except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
             pass
         # ---- 将上传的文件更新至psmwiploader中 ----
         _, filename = os.path.split(file_path)
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         try:
-            pd.io.sql.to_sql(loader_record, 'psmcwiploader', con=mysql.engine, schema='configdb', if_exists='append', index=False)
+            pd.io.sql.to_sql(loader_record, 'psmcwiploader', con=mysql.loaderengine, if_exists='append', index=False)
         except Exception:
             pass
     RepeatWaferCheck()
 
 
 if __name__ == "__main__":
-    row_path = r'F:\08 Daily_Report\01_PTC_Wip'
-    PsmcLotLoader(row_path)
+    PsmcLotLoader()

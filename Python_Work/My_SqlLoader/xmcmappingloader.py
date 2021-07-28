@@ -49,7 +49,7 @@ def FileRepeatChk(_file_path):
     """
     读取loader数据库，比对当前需要上传的文件，判断是否需要upload文件
     :param _file_path: DailyMapping 所在文件目录
-    :return:
+    :return: 返回需要上传的文件名
     """
     mysql = MySQL()
     connection = pymysql.connect(**mysql.sql_config)
@@ -76,12 +76,13 @@ def FileRepeatChk(_file_path):
     return _data_paths
 
 
-def mappingloader(_file_path):
+# main
+# ///////////////////////////////////////////////////////////////
+def mappingloader():
     """
     根据输入的_file_path文件路径，更新mapping文件至数据库xmc_mapping_table;
-    :param _file_path:
-    :return:
     """
+    _file_path = r'\\arctis\PRODUCTION\WAT\XMC\ftp.ymtc.com\Unilot\DailyMapping'   # DailyMapping 所在文件目录传递至FileRepeatChk
     # ---- 确认路径中的不重复文件，并返回文件名的list ----
     file_paths = [_file_path + '\\' + i for i in FileRepeatChk(_file_path)]
     # ---- 数据库设置----
@@ -91,29 +92,26 @@ def mappingloader(_file_path):
 
     # 遍历文件夹中所有的文件, 并上传数据库，如不能上传，则返回路径
     for file_path in file_paths:
-        # 通过读取excel中的数据
-        try:
+        try:          # 尝试读取csv中的数据
             table = pd.read_csv(file_path)
         except AttributeError:
-            continue
-
+            continue  # 如文件无法读取，则wavie;
         table['XMC LOT'] = table['XMC LOT'].str[:6]
         table['PTC LOT'] = table['PTC LOT'].str[:6]
         table['XMC WAFER'] = table['XMC WAFER'].apply(lambda x: '#' + ('0' + str(x))[-2:])
         table['PTC WAFER'] = table['PTC WAFER'].apply(lambda x: '#' + ('0' + str(x))[-2:])
         table['Bond TIME'] = table['Bond TIME'].apply(lambda x: x[:4] + "-" + x[4:6] + "-" + x[6:8])
         del table['PRODUCT ID']
-        # ---- 按表的列名进行重命名，并按要求进行列排序 ----
-        table.rename(columns=rename, inplace=True)
+        table.rename(columns=rename, inplace=True)        # 按表的列名进行重命名，并按要求进行列排序
 
         # ---- 上传数据至数据库 ----
         for index, row in table.iterrows():
             try:  # 将Wafer信息更新至数据库
                 temp = pd.DataFrame(row).T
                 pd.io.sql.to_sql(temp, 'xmc_mapping_table', con=mysql.testdbengine, if_exists='append', index=False)
-            except Exception:  # 如果由于Lot ID重复导致无法更新，则打印路径
+            except Exception:  # 如果由于Lot ID重复导致无法更新，则打印row
                 pass
-        # ---- 将上传的文件更新至xmcmappingloader中 ----
+        # 如读取完成, 则将文件名更新至xmcmappingloader中
         _, filename = os.path.split(file_path)
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         try:
@@ -123,6 +121,5 @@ def mappingloader(_file_path):
 
 
 if __name__ == "__main__":
-    path = r'\\arctis\PRODUCTION\WAT\XMC\ftp.ymtc.com\Unilot\DailyMapping'
-    mappingloader(path)
+    mappingloader()
 
