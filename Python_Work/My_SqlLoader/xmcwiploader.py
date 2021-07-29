@@ -10,36 +10,46 @@
 
 import os
 import datetime
+
+# 导入第三方库
 import pandas as pd
 import numpy as np
-import pymysql
+import MySQLdb
+import xlrd
 
 pd.set_option('display.max_columns', None)   # 显示不省略行
 pd.set_option('display.max_rows', None)      # 显示不省略列
 pd.set_option('display.width', None)         # 显示不换行
 
-# --------------------------数据库设置---------------------------------
-# --------------------------------------------------------------------
+
+# 数据库链接类定义
+# ///////////////////////////////////////////////////////////////
 class MySQL(object):
-    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+    def __init__(self, host='localhost', user="root", password='yp*963.', port=3306, charset='utf8'):
         """实例化后自动连接至数据库"""
         self.host = host
-        self.database = database
         self.port = port
         self.user = user
         self.password = password
         self.charset = charset
-        self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
-        self.engine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.database, self.charset)
+
+        self.confgdb = 'configdb'
+        self.loaderdb = 'loader'
+        self.testdb = 'testdb'
+
+        self.testdb_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.testdb, 'charset': self.charset}
+
+        self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.loaderdb, self.charset)
+        self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.testdb, self.charset)
 
 
-# -------------------------函数设置------------------------------------
-# --------------------------------------------------------------------
+# 相关函数定义
+# ///////////////////////////////////////////////////////////////
 def RepeatWaferCheck():
     """将MLot按子批拉出来，将Current_Time小的Lot的分批Wafer的ID从后面有的Wafer中减去"""
     mysql = MySQL()
     sql_config = mysql.sql_config
-    connection = pymysql.connect(**sql_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
         cursor.execute("""
@@ -50,17 +60,19 @@ def RepeatWaferCheck():
         """)
         sql_results = cursor.fetchall()
         columnDes = cursor.description
-        connection.close()
+    connection.close()
+
     columnNames = [columnDes[i][0] for i in range(len(columnDes))]             # 获取表头
     df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)     # 将从数据库中取出的元祖数据转换为dataframe
-    df.drop_duplicates(subset=['Lot_ID'], keep='first', inplace=True)          # 将dataframe中Lot_id相同的数据，只保留第一次的
     list_mlot = list(df['MLot_ID'].drop_duplicates())                          # 提取出所有数据中唯一的MLOT_ID
-    # ----------根据Mother lot id对数据进行遍历，并根据遍历过程中Wafer No为1的数据，读出Wafer No, 并将Lot Wafer信息进行写入psmc_lot_wafer数据库中------
+
+    # 根据MLot_ID对数据进行遍历，并根据遍历过程中Wafer_No为1的数据，读出Wafer No
+    # ///////////////////////////////////////////////////////////////
     for mlot in list_mlot:
         data = df[df.loc[:, 'MLot_ID'] == mlot].copy()  # 按lot生成data数据,包含（MLot_ID，Lot_ID，Current_Chip_Name，Current_Time，Wafer信息）
         if data.shape[0] > 1:
             data.sort_values(by='Current_Time', axis=0, ascending=False, inplace=True, na_position='first')
-            # ---遍历每一列，如果当列第一个为1，则后续不得为1
+            # 遍历每一列，如果当列第一个为1，则后续不得为1
             for index, row in data.iteritems():
                 if row.name in ['#01', '#02', '#03', '#04', '#05', '#06', '#07', '#08', '#09', '#10',
                                 '#11', '#12', '#13', '#14', '#15', '#16', '#17', '#18', '#19', '#20', '#21', '#22', '#23', '#24', '#25']:
@@ -73,17 +85,59 @@ def RepeatWaferCheck():
                 data['Qty'] = temp.sum(axis=1, skipna=np.nan)
         else:
             pass
+        # 将Wafer No数据按新的状态进行更新
         for row in data.iterrows():
             Item = row[1].where(row[1].notnull(), 'Null')  # 将nan 转变为Null
             dictdata = Item.to_dict()
             MysqlUpdate(dictdata)
 
 
+def MysqlUpdate(dictdata):
+    """更新数据库中Lot的最新信息"""
+
+    Lot_ID = dictdata['Lot_ID']
+    dictstr = dictdata.copy()
+    dictfloat = dictdata.copy()
+    del dictstr['Wafer_Start_Date'], dictstr['MLot_ID'], dictstr['Lot_ID'], dictstr['Qty'], dictstr['#01'], dictstr['#02'], dictstr['#03'], dictstr['#04'], dictstr['#05'], \
+        dictstr['#06'], dictstr['#07'], dictstr['#08'], dictstr['#09'], dictstr['#10'], dictstr['#11'], dictstr['#12'], dictstr['#13'], dictstr['#14'], dictstr['#15'], dictstr['#16'], \
+        dictstr['#17'], dictstr['#18'], dictstr['#19'], dictstr['#20'], dictstr['#21'], dictstr['#22'], dictstr['#23'], dictstr['#24'], dictstr['#25']
+    del dictfloat['Wafer_Start_Date'], dictfloat['MLot_ID'], dictfloat['Lot_ID'], dictfloat['Current_Chip_Name'], dictfloat['Fab'], dictfloat['Layer'], dictfloat['Stage'], dictfloat['Current_Time'], \
+        dictfloat['Forecast_Date']
+    sql = "UPDATE xmc_lot_tracing_table SET {}, {} WHERE Lot_ID = '{}'".format((','.join("`{}` = '{}'".format(k, v) for k, v in dictstr.items())),
+                                                                               (','.join("`{}` = {}".format(k, v) for k, v in dictfloat.items())), Lot_ID)
+
+    mysql = MySQL()
+    sql_config = mysql.sql_config
+    connection = MySQLdb.connect(**mysql.testdb_config)
+    with connection.cursor() as cursor:
+        cursor.execute('USE testdb;')
+        try:  # 将Wafer信息更新至数据库
+            cursor.execute(sql)
+        except Exception as e:
+            print(str(e))
+        finally:
+            connection.commit()
+    connection.close()
+
+
+def DataToWafer(data):
+    """将Wafer_No拍平"""
+    serdatas = pd.Series(np.nan, index=['#01', '#02', '#03', '#04', '#05', '#06', '#07', '#08', '#09', '#10',
+                                        '#11', '#12', '#13', '#14', '#15', '#16', '#17', '#18', '#19', '#20', '#21', '#22', '#23', '#24', '#25'])
+    if data is not None and data is not np.nan:
+        data = data.split('.')
+        for i in data:
+            if len(i) < 2:
+                i = '0' + i
+            serdatas['#' + i] = 1
+    return serdatas
+
+
 def RepeatLotCheck(Item):
     """如果录入的Lot_Id.dataframe()与数据库中已经存在的Lot_Id，则将数据库中的该Lot信息调出，通过判断这个Lot的Current_Time确认是否需要更新"""
     mysql = MySQL()
     sql_config = mysql.sql_config
-    connection = pymysql.connect(**sql_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
         cursor.execute("""
@@ -108,52 +162,21 @@ def RepeatLotCheck(Item):
         MysqlUpdate(dictdata)
 
 
-def MysqlUpdate(dictdata):
-    """更新数据库中Lot的最新信息"""
-    mysql = MySQL()
-    sql_config = mysql.sql_config
-    connection = pymysql.connect(**sql_config)
-    Lot_ID = dictdata['Lot_ID']
-    dictstr = dictdata.copy()
-    dictfloat = dictdata.copy()
-    del dictstr['Wafer_Start_Date'], dictstr['MLot_ID'], dictstr['Lot_ID'], dictstr['Qty'], dictstr['#01'], dictstr['#02'], dictstr['#03'], dictstr['#04'], dictstr['#05'], \
-        dictstr['#06'], dictstr['#07'], dictstr['#08'], dictstr['#09'], dictstr['#10'], dictstr['#11'], dictstr['#12'], dictstr['#13'], dictstr['#14'], dictstr['#15'], dictstr['#16'], \
-        dictstr['#17'], dictstr['#18'], dictstr['#19'], dictstr['#20'], dictstr['#21'], dictstr['#22'], dictstr['#23'], dictstr['#24'], dictstr['#25']
-    del dictfloat['Wafer_Start_Date'], dictfloat['MLot_ID'], dictfloat['Lot_ID'], dictfloat['Current_Chip_Name'], dictfloat['Fab'], dictfloat['Layer'], dictfloat['Stage'], dictfloat['Current_Time'], \
-        dictfloat['Forecast_Date']
-    sql = "UPDATE xmc_lot_tracing_table SET {}, {} WHERE Lot_ID = '{}'".format((','.join("`{}` = '{}'".format(k, v) for k, v in dictstr.items())),
-                                                                               (','.join("`{}` = {}".format(k, v) for k, v in dictfloat.items())), Lot_ID)
-
-    with connection.cursor() as cursor:
-        cursor.execute('USE testdb;')
-        try:  # 将Wafer信息更新至数据库
-            cursor.execute(sql)
-        except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
-            print(sql)
-        connection.commit()
-        cursor.close()
-        connection.close()
-
-
-def DataToWafer(data):
-    """将Wafer_No拍平"""
-    serdatas = pd.Series(np.nan, index=['#01', '#02', '#03', '#04', '#05', '#06', '#07', '#08', '#09', '#10',
-                                        '#11', '#12', '#13', '#14', '#15', '#16', '#17', '#18', '#19', '#20', '#21', '#22', '#23', '#24', '#25'])
-    if data is not None and data is not np.nan:
-        data = data.split('.')
-        for i in data:
-            if len(i) < 2:
-                i = '0' + i
-            serdatas['#' + i] = 1
-    return serdatas
+def DirFolder(_file_path):
+    """遍历路径，获取文件名"""
+    _file_paths = []
+    for root, dirs, files in os.walk(_file_path):
+        for file in files:
+            _file_paths.append(os.path.join(root, file))
+    return _file_paths
 
 
 def FileRepeatChk(_file_path):
     """判断每天需要upload的文件"""
-    mysql = MySQL(database='testdb')
-    sql_config = mysql.sql_config
-    connection = pymysql.connect(**sql_config)
-
+    old_name = []
+    new_name = []
+    mysql = MySQL()
+    connection = pymysql.connect(**mysql.testdb_config)
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE configdb;')
@@ -162,8 +185,7 @@ def FileRepeatChk(_file_path):
     finally:
         cursor.close()
         connection.close()
-    old_name = []
-    new_name = []
+
     for i in result:     # 将文件名元祖变成文件名列表
         for j in i:
             old_name.append(j)
@@ -175,34 +197,26 @@ def FileRepeatChk(_file_path):
     return _data_paths
 
 
-def DirFolder(_file_path):
-    """遍历路径，获取文件名"""
-    _file_paths = []
-    for root, dirs, files in os.walk(_file_path):
-        for file in files:
-            _file_paths.append(os.path.join(root, file))
-    return _file_paths
+# main
+# ///////////////////////////////////////////////////////////////
+def XmcWipLoader():
+    """
+    主程序，遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库, 生成xmc的wip tracing table
+    """
+    data_paths = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\19_XMC_WIP Report'
+    # ---- 确认路径中的不重复文件，并返回文件名的list----
+    file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
 
-
-# ---- 主程序1----
-# ---------------
-def XmcWipLoader(data_paths):
-    """遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库, 生成xmc的wip tracing table """
-    print(111)
-    mysql = MySQL()
-    myconnect = mysql.engine
     rename = {'Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Product ID': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Sche. Date': 'Forecast_Date', 'QTY': 'Qty', 'WAFER_ID': 'Wafer_No'}
 
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
 
-    # ---- 确认路径中的不重复文件，并返回文件名的list----
-    file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
-
-    # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
+    mysql = MySQL()
+    # 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径
     for file_path in file_paths:
         loadtowip = pd.DataFrame()
-        # ---- 通过读取excel获取Current_Time(使用Try是有些文件打不开) ----
+        # 通过读取excel获取Current_Time(使用Try是有些文件打不开)
         try:
             datas = pd.read_csv(file_path)
         except AttributeError:
@@ -252,7 +266,7 @@ def XmcWipLoader(data_paths):
 
 
 if __name__ == "__main__":
-    path = r'C:\Users\yinpeng\Desktop\wip'
+
     XmcWipLoader(path)
 
 

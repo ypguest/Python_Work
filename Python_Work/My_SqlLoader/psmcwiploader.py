@@ -12,7 +12,6 @@
 
 import os
 import datetime
-from time import strftime, localtime
 
 # 导入第三方库
 import pandas as pd
@@ -63,6 +62,7 @@ def RepeatWaferCheck():
         sql_results = cursor.fetchall()
         columnDes = cursor.description
     connection.close()
+
     columnNames = [columnDes[i][0] for i in range(len(columnDes))]             # 获取表头
     df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)     # 将从数据库中取出的元祖数据转换为dataframe
     list_mlot = list(df['MLot_ID'].drop_duplicates())                          # 提取出所有数据中唯一的MLOT_ID
@@ -216,12 +216,13 @@ def PsmcWipLoader():
 
     data_paths = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\01_PTC_Wip'
 
-    # ---- 确认路径中的不重复文件，并返回文件名的list ----
+    # 确认路径中的不重复文件，并返回文件名的list
     file_paths = [data_paths + '\\' + i for i in FileRepeatChk(data_paths)]
 
     rename = {'Wafer Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Current Chip Name': 'Current_Chip_Name', 'Fab': 'Fab',
               'Layer': 'Layer', 'Stage': 'Stage', 'Current Time': 'Current_Time', 'Forecast Date': 'Forecast_Date', 'Qty': 'Qty', 'Wafer No': 'Wafer_No'}
     order = ['Wafer_Start_Date', 'MLot_ID', 'Lot_ID', 'Current_Chip_Name', 'Fab', 'Layer', 'Stage', 'Current_Time', 'Forecast_Date', 'Qty', 'Wafer_No']
+
     # ---- 数据库设置----
     mysql = MySQL()
     # ---- 遍历文件夹中所有的文件, 并确认是否已经上传数据库，如未上传，返回路径 ----
