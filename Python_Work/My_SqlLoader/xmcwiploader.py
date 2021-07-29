@@ -160,6 +160,7 @@ def FileRepeatChk(_file_path):
             cursor.execute('SELECT filename FROM xmcwiploader')
             result = cursor.fetchall()
     finally:
+        cursor.close()
         connection.close()
     old_name = []
     new_name = []
@@ -185,10 +186,9 @@ def DirFolder(_file_path):
 
 # ---- 主程序1----
 # ---------------
-def XmcLotLoader(data_paths):
+def XmcWipLoader(data_paths):
     """遍历excel数据(路径为data_paths.list())，将Lot_ID不同的产品上传至数据库, 生成xmc的wip tracing table """
-    pymysql.install_as_MySQLdb()  # 使python3.0 运行MySQLdb
-
+    print(111)
     mysql = MySQL()
     myconnect = mysql.engine
     rename = {'Start Date': 'Wafer_Start_Date', 'MLot ID': 'MLot_ID', 'Lot ID': 'Lot_ID', 'Product ID': 'Current_Chip_Name', 'Fab': 'Fab',
@@ -253,6 +253,6 @@ def XmcLotLoader(data_paths):
 
 if __name__ == "__main__":
     path = r'C:\Users\yinpeng\Desktop\wip'
-    XmcLotLoader(path)
+    XmcWipLoader(path)
 
 

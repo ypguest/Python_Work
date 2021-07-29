@@ -21,17 +21,22 @@ class MySQL(object):
     """
     数据库连接类定义, 默认为本地数据库;
     """
-    def __init__(self, host='localhost', database='testdb', user="root", password='yp*963.', port=3306, charset='utf8'):
+    def __init__(self, host='localhost', user="root", password='yp*963.', port=3306, charset='utf8'):
         """实例化后自动连接至数据库"""
         self.host = host
-        self.database = database
         self.port = port
         self.user = user
         self.password = password
         self.charset = charset
-        self.sql_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.database, 'charset': self.charset}
-        self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, 'loader', self.charset)
-        self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, 'testdb', self.charset)
+
+        self.confgdb = 'configdb'
+        self.loaderdb = 'loader'
+        self.testdb = 'testdb'
+
+        self.testdb_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.testdb, 'charset': self.charset}
+
+        self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.loaderdb, self.charset)
+        self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.testdb, self.charset)
 
 
 def DirFolder(_file_path):
