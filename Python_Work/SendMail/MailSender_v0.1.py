@@ -13,8 +13,8 @@ from email.header import Header
 
 def gentable():
     """遍历路径，获取文件未尾为当天日期的文件名"""
-    _file_path_cp = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\QRE_CP_Yield_Report_CP.xls'
-    _file_path_count = r'\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\QRE_CP_Yield_Report_COUNT.xls'
+    _file_path_cp = r'\\arctis\PRODUCTION\PDF\DPReport\003_Daily_Report\QRE_CP_Yield_Report_CP.xls'
+    _file_path_count = r'\\arctis\PRODUCTION\PDF\DPReport\003_Daily_Report\QRE_CP_Yield_Report_COUNT.xls'
     _data_cp = pd.read_excel(io=_file_path_cp)
     _data_count = pd.read_excel(io=_file_path_count)
     _data_merge = pd.DataFrame()
@@ -49,7 +49,7 @@ def sendMail(sender, mail_pwd, receivers, mail_msg, mail_host):
 
     # 自定义发送邮件主题
     ticks = datetime.date.today()
-    subject = "UniIC_CP_Yield_Report-{}[tryrun]".format(ticks)
+    subject = "UniIC Quality Report – Product CP Yield - {}[tryrun]".format(ticks)
     message['Subject'] = Header(subject, 'utf-8')
 
     # 发送邮件
@@ -64,13 +64,13 @@ def sendMail(sender, mail_pwd, receivers, mail_msg, mail_host):
     smtpObj.quit()  # 关闭
 
 
-def main():
-    link = r"\\arctis\qcxpub\QRE\04_QA(Component)\99_Daily_Report\99_QRE_CP_Yield_Report\CP_Map_Report\7.29Daily_Report_Map_Gallery.html"
+def MailSender():
+    link = r"\\arctis\PRODUCTION\PDF\DPReport\003_Daily_Report\CP_Map_Report\8.20Daily_Report_Map_Gallery.html"
     # 定义邮件内容
     text = """
     <p>Hi All, </p>
     <p></p>
-    <p>Please review UniIC CP Yield Report</p>
+    <p>Please review product CP Yield Report</p>
     <p></p>
     """
     table = gentable()   # 产生HTML文件
@@ -82,12 +82,16 @@ def main():
 
     mail_msg = text + table + text2
     # 调用函数，这里的密码使用生成的密码；
-    # receivers = ['peng.yin@unisemicon.com']
-    receivers = ['peng.yin@unisemicon.com', 'gordon.ding@unisemicon.com', 'bin.ma@unisemicon.com', 'shuyuan.ma@unisemicon.com',
-                 'xing.guo@unisemicon.com', 'xiaowei.zhu@unisemicon.com', 'qian.wang@unisemicon.com', 'kai.zhang@unisemicon.com',
-                 'chunjuan.wang@unisemicon.com', 'hua.huang@unisemicon.com', 'yonghua.chen@unisemicon.com', 'shaoting.he@unisemicon.com', 'hui.wang3@unisemicon.com',
-                 'yubing.wang@unisemicon.com', 'song.wang@unisemicon.com', 'ziyue.tang@unisemicon.com', 'xudong.gao@unisemicon.com', 'guowei.zhang@unisemicon.com']
+    receivers = ['peng.yin@unisemicon.com']
+    # receivers = ['peng.yin@unisemicon.com', 'gordon.ding@unisemicon.com', 'bin.ma@unisemicon.com', 'shuyuan.ma@unisemicon.com',
+    #              'xing.guo@unisemicon.com', 'xiaowei.zhu@unisemicon.com', 'qian.wang@unisemicon.com', 'kai.zhang@unisemicon.com',
+    #              'chunjuan.wang@unisemicon.com', 'hua.huang@unisemicon.com', 'yonghua.chen@unisemicon.com', 'shaoting.he@unisemicon.com', 'hui.wang3@unisemicon.com',
+    #              'yubing.wang@unisemicon.com', 'song.wang@unisemicon.com', 'ziyue.tang@unisemicon.com', 'xudong.gao@unisemicon.com', 'guowei.zhang@unisemicon.com', 'yi.zhang@unisemicon.com',
+    #              'dapeng.huang@unisemicon.com', 'yuanzhao.wang@unisemicon.com']
     sendMail(sender="qre.public@unisemicon.com", mail_pwd="yp0*963", receivers=receivers, mail_msg=mail_msg, mail_host="smtp.263.net")
+
+
+
 
 
 if __name__ == '__main__':

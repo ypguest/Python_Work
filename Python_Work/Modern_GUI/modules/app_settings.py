@@ -1,4 +1,11 @@
-class Settings():
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+global variables to configure user interface.
+"""
+
+class Settings(object):
     # APP SETTINGS
     # ///////////////////////////////////////////////////////////////
     ENABLE_CUSTOM_TITLE_BAR = True

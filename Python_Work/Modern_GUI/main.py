@@ -13,13 +13,13 @@ import sys
 import os
 import platform
 
-# IMPORT / GUI AND MODULES AND WIDGETS
+# IMPORT GUI AND MODULES AND WIDGETS
 from modules import *
 from widgets import *
 
 os.environ["QT_FONT_DPI"] = "96"  # FIX Problem for High DPI and Scale above 100%
-widgets = None    # SET AS GLOBAL WIDGETS
 
+widgets = None    # SET AS GLOBAL WIDGETS
 
 class MainWindow(QMainWindow):
     def __init__(self):

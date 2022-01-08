@@ -1,10 +1,13 @@
-"""针对Xiaoman(512M_F25)产品的特性(Retical)，绘制FRC map"""
+# !/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""针对产品的特性(Retical)，绘制FRC map"""
 
 
 import os
 import struct
 import re
-from PIL import Image
+from PIL import Image,ImageOps
 
 
 def create_bmp_from_str(w, h, tarstr, bmpName):
@@ -62,8 +65,6 @@ def createrdmap(filename):
                 cowct = int(line[7:10])  # Number of columns (X)
                 rolct = int(line[10:13])  # Number of rows (Y)
                 # print(cowct,rolct)
-                print(cowct)
-                print(rolct)
 
             elif line_key == '110':
                 # get the fail region location dimension
@@ -90,7 +91,8 @@ def createrdmap(filename):
                 x = int(chipline[3:6])
                 y = int(chipline[6:9])
                 create_bmp_from_str(frlx, frly, rdline[3:], "tmp.bmp")
-                im = Image.open("tmp.bmp")
+                im0 = Image.open("tmp.bmp")
+                im = ImageOps.mirror(ImageOps.flip(im0))
                 topLeftX = (x - 1) * (frlx + 4) + 3
                 topLeftY = bmpSize[1] - y * (frly + 4) - 3
                 newImage.paste(im, (topLeftX, topLeftY))
@@ -106,5 +108,6 @@ def createrdmap(filename):
 
 
 if __name__ == '__main__':
-    path = r'C:\Users\yinpeng\Desktop\WorkSpace\TestData\CP_P_MRA357000_25_2.20211204051943'
+    path = r'C:\Users\yinpeng\Desktop\WorkSpace\TestData\CP_P_MRC098002_04_2'
     createrdmap(path)
+

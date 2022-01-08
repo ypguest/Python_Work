@@ -14,21 +14,22 @@ from Python_Work.My_SqlLoader.xmcwiploader import XmcWipLoader
 # ///////////////////////////////////////////////////////////////
 class SubThread1(Thread):
     def run(self):               # 固定写法
-        PsmcWipLoader()
+        while True:
+            time_now = strftime("%H:%M:%S", localtime())  # 刷新
+            if time_now == '20:24:00':
+                PsmcWipLoader()
 
 
 class SubThread2(Thread):
     def run(self):               # 固定写法
-        path = r'C:\Users\yinpeng\Desktop\wip'
-        XmcWipLoader(path)
+        while True:
+            time_now = strftime("%H:%M:%S", localtime())  # 刷新
+            if time_now == '20:24:00':
+                XmcWipLoader()
 
 
 if __name__ == "__main__":
     t1 = SubThread1()
     t2 = SubThread2()
-    while True:
-        time_now = strftime("%H:%M:%S", localtime())  # 刷新
-        if time_now == '13:09:00':
-            t1.start()  # 开启线程
-            t2.start()  # 开启线程
-            time.sleep(300)
+    t1.start()  # 开启线程
+    t2.start()  # 开启线程

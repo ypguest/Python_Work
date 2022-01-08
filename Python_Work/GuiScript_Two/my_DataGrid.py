@@ -108,7 +108,6 @@ class QMapDataGridWip(QMainWindow):
         _mysql = MySQLite()
         _desc, _result = _mysql.fetchAll(self.db)   # 从本地SQLite数据库中获取暂存的查询数据
         _wip_df = pd.DataFrame(_result, columns=_desc)
-
         # ==== 按type生成产品信息，按wip type生成layer信息 ====
         self._wip_layer_df = dict()   # 按type分类wip信息
 
@@ -116,7 +115,10 @@ class QMapDataGridWip(QMainWindow):
             self.wip_types = ['logic', 'dram', '3DIC']
             for wip_type in self.wip_types:
                 # ==== 按process 类型对wip进行分类 ====
+
+
                 data_wip = _wip_df[_wip_df['UniIC_Product_ID'].str.contains(wip_type)].copy()
+
                 data_wip['Qty'] = data_wip['Qty'].apply(pd.to_numeric, errors='coerce')  # 将Qty转变为数字
                 data_wip['Stage'] = data_wip['Stage'].str.upper()    # 将Stage转换为大写
 
@@ -127,6 +129,7 @@ class QMapDataGridWip(QMainWindow):
                 layer_infor = pd.DataFrame(result_layer, columns=desc_layer)
 
                 data_wip = pd.merge(data_wip, layer_infor, how='left', on='Stage')
+
                 grouped_data = data_wip.groupby(['Layer'])['Qty'].sum()
 
                 # ==== 将layer与求和结果进行合并，并删除无用信息 ====
@@ -164,13 +167,11 @@ class QMapDataGridWip(QMainWindow):
             _ax = list()
             _loc_ax = list()
             i = 0
-
             # 设置axes的长，宽
             _grid = self.__fig.add_gridspec(2, 16)
             _loc_ax.append([0, 1, 0, 13])
             _loc_ax.append([1, 2, 12, 13])
             _loc_ax.append([0, 2, 14, 16])
-
             for wip_type in self._wip_layer_df:
                 _layername = self._wip_layer_df[wip_type]['Layer']   # 参数1
                 _count = self._wip_layer_df[wip_type]['Qty']  # 参数2

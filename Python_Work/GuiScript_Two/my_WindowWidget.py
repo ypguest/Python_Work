@@ -31,7 +31,7 @@ class MainWindows(QMainWindow, Ui_MainWindow):
         # =================== 参数定义 =======================
         self.fab = 'PSMC'
         self.prodFam = ''
-        self.proName = ''
+        self.proName = '' 
         self.proVer = ''
         self.func_button = ''
 

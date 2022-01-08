@@ -60,20 +60,19 @@ def xml_reader(file_path):
             for Data in children.iter("{http://www.semi.org}Data"):
                 DataCode = Data.attrib['CreateDate']
                 Bindata_dict.update({'Data': DataCode})
-            print(Bindata_dict)
     return Bindata_dict
 
 
 if __name__ == '__main__':
-    rawpaths = r"""\\arctis\qcxpub\QRE\00_Production_Public\4GDDR4_25nm\17_Quality_control\6.Wafer Plan Vs Mapping\500pcs Raw Data"""
+    rawpaths = r"C:\Users\yinpeng\Desktop\新建文件夹 (7)\新建文件夹"
     paths = dir_folder(rawpaths)
     df = pd.DataFrame()
     for path in paths:
         data = xml_reader(path)
         df = df.append(data, ignore_index=True)
-    # df = df.set_index("WaferId")
-    # df = df.fillna(0)
-    # df.to_excel('data.xls')
+    df = df.set_index("WaferId")
+    df = df.fillna(0)
+    df.to_excel('data.xls')
 
 
 

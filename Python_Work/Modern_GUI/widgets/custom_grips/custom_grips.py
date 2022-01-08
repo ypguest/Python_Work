@@ -20,7 +20,7 @@ from PySide6.QtWidgets import *
 
 
 class CustomGrip(QWidget):
-    def __init__(self, parent, position, disable_color = False):
+    def __init__(self, parent, position, disable_color=False):
 
         # SETUP UI
         QWidget.__init__(self)

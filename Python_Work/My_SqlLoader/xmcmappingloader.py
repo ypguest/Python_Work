@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-用于将XMC提供的DailyMapping上传至数据库
+用于将XMC提供的DailyMapping上传至数据库（自动上传路径）
 # 1. load mapping file
 # 2. 如果文件loading成功，则将将文件名写入xmcmappingloader中
 """
@@ -21,7 +21,8 @@ class MySQL(object):
     """
     数据库连接类定义, 默认为本地数据库;
     """
-    def __init__(self, host='localhost', user="root", password='yp*963.', port=3306, charset='utf8'):
+    def __init__(self, host='172.21.21.8', user="root", password="uniic2020", port=3306, charset="utf8"):
+
         """实例化后自动连接至数据库"""
         self.host = host
         self.port = port
@@ -34,6 +35,7 @@ class MySQL(object):
         self.testdb = 'testdb'
 
         self.testdb_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.testdb, 'charset': self.charset}
+        self.loader_config = {'user': self.user, 'password': self.password, 'host': self.host, 'database': self.loaderdb, 'charset': self.charset}
 
         self.loaderengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.loaderdb, self.charset)
         self.testdbengine = 'mysql+mysqldb://{}:{}@{}:{}/{}?charset={}'.format(self.user, self.password, self.host, self.port, self.testdb, self.charset)
@@ -53,11 +55,12 @@ def DirFolder(_file_path):
 def FileRepeatChk(_file_path):
     """
     读取loader数据库，比对当前需要上传的文件，判断是否需要upload文件
+
     :param _file_path: DailyMapping 所在文件目录
     :return: 返回需要上传的文件名
     """
     mysql = MySQL()
-    connection = pymysql.connect(**mysql.sql_config)
+    connection = pymysql.connect(**mysql.loader_config)
     try:
         with connection.cursor() as cursor:
             cursor.execute('USE loader;')

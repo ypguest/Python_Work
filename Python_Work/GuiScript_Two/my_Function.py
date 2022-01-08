@@ -79,6 +79,7 @@ def DailyWipCheck(productid, Fab):
     lotche_des, lotche_sql_res = mysql.sqlAll(sqlquery)
     mysql.cur.close()
     lot_df = pd.DataFrame(lotche_sql_res, columns=lotche_des)
+
     lot_df.set_index(["Index"], inplace=True)  # 将dataframe中'index'设置为index
 
     if not lot_df.empty:

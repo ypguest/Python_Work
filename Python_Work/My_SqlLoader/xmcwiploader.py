@@ -33,7 +33,6 @@ class MySQL(object):
         self.password = password
         self.charset = charset
 
-        self.confgdb = 'configdb'
         self.loaderdb = 'loader'
         self.testdb = 'testdb'
 
@@ -48,7 +47,6 @@ class MySQL(object):
 def RepeatWaferCheck():
     """将MLot按子批拉出来，将Current_Time小的Lot的分批Wafer的ID从后面有的Wafer中减去"""
     mysql = MySQL()
-    sql_config = mysql.sql_config
     connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
@@ -107,7 +105,6 @@ def MysqlUpdate(dictdata):
                                                                                (','.join("`{}` = {}".format(k, v) for k, v in dictfloat.items())), Lot_ID)
 
     mysql = MySQL()
-    sql_config = mysql.sql_config
     connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
@@ -136,7 +133,6 @@ def DataToWafer(data):
 def RepeatLotCheck(Item):
     """如果录入的Lot_Id.dataframe()与数据库中已经存在的Lot_Id，则将数据库中的该Lot信息调出，通过判断这个Lot的Current_Time确认是否需要更新"""
     mysql = MySQL()
-    sql_config = mysql.sql_config
     connection = MySQLdb.connect(**mysql.testdb_config)
     with connection.cursor() as cursor:
         cursor.execute('USE testdb;')
@@ -148,7 +144,7 @@ def RepeatLotCheck(Item):
         """ % Item['Lot_ID'].item())
         sql_results = cursor.fetchall()
         columnDes = cursor.description
-        connection.close()
+    connection.close()
     columnNames = [columnDes[i][0] for i in range(len(columnDes))]
     df = pd.DataFrame([list(i) for i in sql_results], columns=columnNames)  # 将这个Lot的信息从psmc_lot_tracing_table中调出来
     # 如果数据库中的时间比excel中读取的current时间小，则更新数据，否则Pass
@@ -176,10 +172,10 @@ def FileRepeatChk(_file_path):
     old_name = []
     new_name = []
     mysql = MySQL()
-    connection = pymysql.connect(**mysql.testdb_config)
+    connection = MySQLdb.connect(**mysql.testdb_config)
     try:
         with connection.cursor() as cursor:
-            cursor.execute('USE configdb;')
+            cursor.execute('USE loader;')
             cursor.execute('SELECT filename FROM xmcwiploader')
             result = cursor.fetchall()
     finally:
@@ -225,7 +221,7 @@ def XmcWipLoader():
         time = os.path.split(file_path)[-1].split('_')[-1].split('.')[0]
         # ---- 将Lot ID转化为9位 ----
         for k, v in datas['Lot ID'].items():
-            v = v.split('.')
+            v = str(v).split('.')
             if len(v) == 1:
                 v = [v[0] + '000']
             elif len(v) == 2:
@@ -245,28 +241,26 @@ def XmcWipLoader():
             wafer_no = DataToWafer(row['Wafer_No'])
             ser_total = pd.DataFrame(pd.concat([row[:-1], wafer_no])).T
             loadtowip = loadtowip.append(ser_total)  # 生成wip的dataframe
-            # noinspection PyBroadException
             try:     # 将Wafer信息更新至数据库
-                pd.io.sql.to_sql(ser_total, 'xmc_lot_tracing_table', con=myconnect, schema='testdb', if_exists='append', index=False)
+                pd.io.sql.to_sql(ser_total, 'xmc_lot_tracing_table', con=mysql.testdbengine, if_exists='append', index=False)
             except Exception:      # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
                 RepeatLotCheck(ser_total)
-        # ---- 更新psmc_wip_tracing_table ----
+        # 更新psmc_wip_tracing_table
         try:
-            pd.io.sql.to_sql(loadtowip, 'xmc_wip_tracing_table', con=mysql.engine, if_exists='append', index=False)
+            pd.io.sql.to_sql(loadtowip, 'xmc_wip_tracing_table', con=mysql.testdbengine, if_exists='append', index=False)
         except Exception:  # 如果由于Lot ID重复导致无法更新，则调用RepeatLotCheck函数
             pass
-        # ---- 将上传的文件更新至psmwiploader中 ----
+        # ---- 将上传的文件更新至xmcwiploader中 ----
         _, filename = os.path.split(file_path)
         loader_record = pd.DataFrame({'filename': filename}, index=[0])
         try:
-            pd.io.sql.to_sql(loader_record, 'xmcwiploader', con=mysql.engine, schema='configdb', if_exists='append', index=False)
+            pd.io.sql.to_sql(loader_record, 'xmcwiploader', con=mysql.loaderengine, if_exists='append', index=False)
         except Exception:
             pass
     RepeatWaferCheck()
 
 
 if __name__ == "__main__":
-
-    XmcWipLoader(path)
+    XmcWipLoader()
 
 
